@@ -1,0 +1,209 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Creating Endpoint for Payment Method'
+
+Parameters: 
+  stage: 
+    Type: String
+    Default: 'dev'
+  layerarn:
+    Type: String
+    Default: 'arn:aws:lambda:us-west-2:176385768664:layer:TokenizeData:33'
+  kmsid:
+    Type: String
+    Default: 'arn:aws:kms:*:176385768664:key/bd3a8796-1638-42f3-b318-ac357427f326'
+  dynamodbarn:
+    Type: String
+    Default: 'arn:aws:dynamodb:us-west-2:176385768664:table/CreditCardTokenizerTable'
+  encryptTableName:
+    Type: String
+    Default: 'CreditCardTokenizerTable'
+  customerTableName:
+    Type: String
+    Default: 'CustomerOrderTable'
+
+Globals:
+  Function:
+    Timeout: 10
+    Environment:
+      Variables:
+        EncryptionTableName: !Sub ${encryptTableName}
+        CustomerOrderTableName: !Sub ${customerTableName}
+
+Resources:
+  UserPool:
+     Type: AWS::Cognito::UserPool
+     Properties:
+        AdminCreateUserConfig:
+          AllowAdminCreateUserOnly: false
+        UserPoolName: TestingUsers
+        UsernameAttributes:
+         - email
+        AutoVerifiedAttributes:
+         - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 6
+            RequireLowercase: true
+            RequireNumbers: false
+            RequireSymbols: false
+            RequireUppercase: true
+  UserPoolAppClient:
+     Type: AWS::Cognito::UserPoolClient
+     Properties:
+       UserPoolId: !Ref UserPool
+       GenerateSecret: false
+       ExplicitAuthFlows:
+       - USER_PASSWORD_AUTH
+  CustomerOrderFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: payment_method/
+      Handler: app.lambda_handler
+      Runtime: python3.7
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Layers:
+       - !Sub ${layerarn}
+      Events:
+        SayHello:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /hello
+            RestApiId: !Ref PaymentMethodApi
+            Method: get
+            Auth:
+              Authorizer: NONE
+        PaymentMethod:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /order
+            RestApiId: !Ref PaymentMethodApi
+            Method: post
+        PayBillMethod:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /paybill
+            RestApiId: !Ref PaymentMethodApi
+            Method: post
+  PaymentMethodApi:
+    DependsOn: UserPool
+    Type: 'AWS::Serverless::Api'
+    Properties:
+      Name: PaymentMethodApi
+      StageName: !Ref stage
+      EndpointConfiguration: 'REGIONAL'
+      Cors:
+        AllowMethods: "'*'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: MyCognitoAuthorizer
+        Authorizers:
+          MyCognitoAuthorizer:
+            UserPoolArn: !GetAtt UserPool.Arn
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+  KMSAccessPolicy:
+    DependsOn: CustomerOrderFunction
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: KMSAccessPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: 
+              - "kms:Decrypt"
+              - "kms:Encrypt"
+              - "kms:GenerateDataKey"
+              - "kms:GenerateDataKeyWithoutPlaintext"
+            Resource: !Sub ${kmsid}
+      Roles:
+        - !Ref LambdaExecutionRole 
+  DynamoDBAccessPolicy:
+    DependsOn: CustomerOrderFunction
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: DynamoDBAccessPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: 
+              - "dynamodb:BatchGetItem"
+              - "dynamodb:BatchWriteItem"
+              - "dynamodb:PutItem"
+              - "dynamodb:DescribeTable"
+              - "dynamodb:DescribeGlobalTable"
+              - "dynamodb:DeleteItem"
+              - "dynamodb:GetItem"
+              - "dynamodb:Query"
+              - "dynamodb:GetRecords"
+            Resource: 
+            - !Sub ${dynamodbarn}
+            - !GetAtt OrderDatabase.Arn
+      Roles:
+        - !Ref LambdaExecutionRole 
+  CloudWatchLogAccessPolicy:
+    DependsOn: CustomerOrderFunction
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: CloudWatchLogAccessPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: 
+              - "logs:CreateLogGroup"
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+            Resource: "*"
+      Roles:
+        - !Ref LambdaExecutionRole
+  OrderDatabase:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${customerTableName}
+      AttributeDefinitions: 
+        - AttributeName: "CustomerOrder"
+          AttributeType: "S"
+      KeySchema: 
+        - AttributeName: "CustomerOrder"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      SSESpecification:
+        SSEEnabled: Yes
+        SSEType: 'KMS'
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  PaymentMethodApiURL:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub "https://${PaymentMethodApi}.execute-api.${AWS::Region}.amazonaws.com/${stage}/"
+  CustomerOrderFunction:
+    Description: "Customer Order Lambda Function ARN"
+    Value: !GetAtt CustomerOrderFunction.Arn
+  LambdaExecutionRole:
+    Description: "Implicit IAM Role created for Hello World function"
+    Value: !GetAtt LambdaExecutionRole.Arn
+  UserPoolArn:
+    Description: "User Pool Arn for the cognito pool"
+    Value: !GetAtt UserPool.Arn
+  UserPoolAppClientId:
+    Description: "User Pool App Client for your application"
+    Value: !Ref UserPoolAppClient
+  Region:
+    Description: "Region"
+    Value: !Ref AWS::Region

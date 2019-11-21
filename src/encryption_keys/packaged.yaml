@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Lambdsa Layer for tokenization of sensitive data
+Resources:
+  CMKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Customer managed key to be used for dynamo items encryption
+      Enabled: true
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: key-default-1
+        Statement:
+        - Sid: Enable IAM User Permissions
+          Effect: Allow
+          Principal:
+            AWS:
+              Fn::Join:
+              - ''
+              - - 'arn:aws:iam::'
+                - Ref: AWS::AccountId
+                - :root
+          Action: kms:*
+          Resource: '*'
+  KeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName:
+        Fn::Sub: alias/${AWS::StackName}
+      TargetKeyId:
+        Ref: CMKey
+  TokenDatabase:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CreditCardTokenizerTable
+      AttributeDefinitions:
+      - AttributeName: Hash_Key
+        AttributeType: S
+      - AttributeName: Account_Id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: Hash_Key
+        KeyType: HASH
+      - AttributeName: Account_Id
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+Outputs:
+  KMSKeyID:
+    Description: ARN for CMS Key created
+    Value:
+      Fn::GetAtt:
+      - CMKey
+      - Arn
+  TableName:
+    Description: Dynamo DB Table Name
+    Value:
+      Fn::GetAtt:
+      - TokenDatabase
+      - Name

@@ -1,0 +1,231 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Creating Endpoint for Payment Method
+Parameters:
+  stage:
+    Type: String
+    Default: dev
+  layerarn:
+    Type: String
+    Default: arn:aws:lambda:us-west-2:176385768664:layer:TokenizeData:33
+  kmsid:
+    Type: String
+    Default: arn:aws:kms:*:176385768664:key/bd3a8796-1638-42f3-b318-ac357427f326
+  dynamodbarn:
+    Type: String
+    Default: arn:aws:dynamodb:us-west-2:176385768664:table/CreditCardTokenizerTable
+  encryptTableName:
+    Type: String
+    Default: CreditCardTokenizerTable
+  customerTableName:
+    Type: String
+    Default: CustomerOrderTable
+Globals:
+  Function:
+    Timeout: 10
+    Environment:
+      Variables:
+        EncryptionTableName:
+          Fn::Sub: ${encryptTableName}
+        CustomerOrderTableName:
+          Fn::Sub: ${customerTableName}
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      UserPoolName: TestingUsers
+      UsernameAttributes:
+      - email
+      AutoVerifiedAttributes:
+      - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 6
+          RequireLowercase: true
+          RequireNumbers: false
+          RequireSymbols: false
+          RequireUppercase: true
+  UserPoolAppClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId:
+        Ref: UserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+      - USER_PASSWORD_AUTH
+  CustomerOrderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://reinvent2019-lambda-layer/be103d414b229d248b9881571fd46e43
+      Handler: app.lambda_handler
+      Runtime: python3.7
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
+      Layers:
+      - Fn::Sub: ${layerarn}
+      Events:
+        SayHello:
+          Type: Api
+          Properties:
+            Path: /hello
+            RestApiId:
+              Ref: PaymentMethodApi
+            Method: get
+            Auth:
+              Authorizer: NONE
+        PaymentMethod:
+          Type: Api
+          Properties:
+            Path: /order
+            RestApiId:
+              Ref: PaymentMethodApi
+            Method: post
+        PayBillMethod:
+          Type: Api
+          Properties:
+            Path: /paybill
+            RestApiId:
+              Ref: PaymentMethodApi
+            Method: post
+  PaymentMethodApi:
+    DependsOn: UserPool
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: PaymentMethodApi
+      StageName:
+        Ref: stage
+      EndpointConfiguration: REGIONAL
+      Cors:
+        AllowMethods: '''*'''
+        AllowHeaders: '''*'''
+        AllowOrigin: '''*'''
+      Auth:
+        DefaultAuthorizer: MyCognitoAuthorizer
+        Authorizers:
+          MyCognitoAuthorizer:
+            UserPoolArn:
+              Fn::GetAtt:
+              - UserPool
+              - Arn
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+  KMSAccessPolicy:
+    DependsOn: CustomerOrderFunction
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: KMSAccessPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Action:
+          - kms:Decrypt
+          - kms:Encrypt
+          - kms:GenerateDataKey
+          - kms:GenerateDataKeyWithoutPlaintext
+          Resource:
+            Fn::Sub: ${kmsid}
+      Roles:
+      - Ref: LambdaExecutionRole
+  DynamoDBAccessPolicy:
+    DependsOn: CustomerOrderFunction
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: DynamoDBAccessPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Action:
+          - dynamodb:BatchGetItem
+          - dynamodb:BatchWriteItem
+          - dynamodb:PutItem
+          - dynamodb:DescribeTable
+          - dynamodb:DescribeGlobalTable
+          - dynamodb:DeleteItem
+          - dynamodb:GetItem
+          - dynamodb:Query
+          - dynamodb:GetRecords
+          Resource:
+          - Fn::Sub: ${dynamodbarn}
+          - Fn::GetAtt:
+            - OrderDatabase
+            - Arn
+      Roles:
+      - Ref: LambdaExecutionRole
+  CloudWatchLogAccessPolicy:
+    DependsOn: CustomerOrderFunction
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: CloudWatchLogAccessPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Action:
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:PutLogEvents
+          Resource: '*'
+      Roles:
+      - Ref: LambdaExecutionRole
+  OrderDatabase:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub: ${customerTableName}
+      AttributeDefinitions:
+      - AttributeName: CustomerOrder
+        AttributeType: S
+      KeySchema:
+      - AttributeName: CustomerOrder
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+Outputs:
+  PaymentMethodApiURL:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value:
+      Fn::Sub: https://${PaymentMethodApi}.execute-api.${AWS::Region}.amazonaws.com/${stage}/
+  CustomerOrderFunction:
+    Description: Customer Order Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - CustomerOrderFunction
+      - Arn
+  LambdaExecutionRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value:
+      Fn::GetAtt:
+      - LambdaExecutionRole
+      - Arn
+  UserPoolArn:
+    Description: User Pool Arn for the cognito pool
+    Value:
+      Fn::GetAtt:
+      - UserPool
+      - Arn
+  UserPoolAppClientId:
+    Description: User Pool App Client for your application
+    Value:
+      Ref: UserPoolAppClient
+  Region:
+    Description: Region
+    Value:
+      Ref: AWS::Region
