@@ -1,7 +1,7 @@
 
 YOUR_COGNITO_REGION=us-west-2
-YOUR_COGNITO_APP_CLIENT_ID=35iau1s3143ad1p8bgikq6m1e9
-YOUR_EMAIL=nujgup@amazon.com
+YOUR_COGNITO_APP_CLIENT_ID=
+YOUR_EMAIL=
 YOUR_PASSWORD=Testing@123
 
 echo "Sign up new cognito User"
