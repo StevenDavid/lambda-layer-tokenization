@@ -8,13 +8,13 @@ Parameters:
     Default: 'dev'
   layerarn:
     Type: String
-    Default: 'arn:aws:lambda:us-west-2:176385768664:layer:TokenizeData:33'
+    Default: 'default'
   kmsid:
     Type: String
-    Default: 'arn:aws:kms:*:176385768664:key/bd3a8796-1638-42f3-b318-ac357427f326'
+    Default: 'default'
   dynamodbarn:
     Type: String
-    Default: 'arn:aws:dynamodb:us-west-2:176385768664:table/CreditCardTokenizerTable'
+    Default: 'default'
   encryptTableName:
     Type: String
     Default: 'CreditCardTokenizerTable'
