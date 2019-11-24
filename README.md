@@ -21,18 +21,18 @@ This session is designed to familiarize you with how to use [Lambda Layers](http
  3. This lab uses **python**  programming language for Lambda Layer and Lamnda Function application code.
  
  ## Environment Setup
- This Lab uses AWS Cloud9 as IDE. Complete the Cloud9 Setup in your environment using this [guide](cloud9_setup/README.md)
+ Step 1. This Lab uses AWS Cloud9 as IDE. Complete the Cloud9 Setup in your environment using this [guide](cloud9_setup/README.md)
  
  ## Create S3 Bucket
- We need [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/Welcome.html) bucket for [AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html). We are going to use AWS SAM in this lab to build and deploy SAM templates (template.yaml). Note that you need to use a unique name for your S3 bucket. Replace unique-s3-bucket-name with the required value.
+ Step 2.  We need [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/Welcome.html) bucket for [AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html). We are going to use AWS SAM in this lab to build and deploy SAM templates (template.yaml). Note that you need to use a unique name for your S3 bucket. Replace unique-s3-bucket-name with the required value.
  
  ```bash
  aws s3 mb s3://<unique-s3-bucket-name>
  ```
  
- ## Initial and Clone Git into Cloud9 Environment
+ ## Initialize and Clone Git into Cloud9 Environment
  
- Use the below commands to initialize and clone the git repository
+ Step 3. Use the below commands to initialize and clone the git repository
  
  ```bash
  git init
@@ -45,25 +45,25 @@ This session is designed to familiarize you with how to use [Lambda Layers](http
  
  ## Create Customer Managed KMS Key
  
-Go to encryption_keys directory
+ Step 4.1 Go to encryption_keys directory
 
 ```bash
 cd lambda-layer-tokenization/src/encryption_keys
 ```
  
-Build the SAM template (template.yaml) under the directory
+Step 4.2 Build the SAM template (template.yaml) under the directory
 
 ```bash
 sam build --use-container
 ```
  
-After the build is successful, below is the output
+Step 4.3 After the build is successful, below is the output
 
 ```bash
 Build Succeeded
 ```
  
-Package the SAM template to push the code to S3 Bucket
+Step 4.4 Package the SAM template to push the code to S3 Bucket
 
 ```bash
 sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml
@@ -73,7 +73,7 @@ Expected Output
 
 ```Successfully packaged artifacts and wrote output template to file packaged.yaml```
 
-Deploy the stack using below command. Note the name of the stack is **kms-stack**
+Step 4.6 Deploy the stack using below command. Note the name of the stack is **kms-stack**
 
 `sam deploy --template-file ./packaged.yaml --stack-name kms-stack`
 
@@ -81,7 +81,7 @@ Expected Output
 
 ```Successfully created/updated stack - kms-stack```
 
-Check the output variables for the stack and note the **OutputValue** of  **OutputKey** **KMSKeyID** from the output
+Step 4.7 Check the output variables for the stack and note the **OutputValue** of  **OutputKey** **KMSKeyID** from the output
 
 `aws cloudformation describe-stacks --stack-name kms-stack`
 
@@ -101,11 +101,13 @@ In this step, you have created customer managed KMS key and gave permissions to 
 ## Lambda Layer for String Tokenization and Encrypted Data Store
 In this section, we will use the customer managed master key created in the earlier stack to create the lambda layer which will be used by application teams to generate token for sensitive data string such as credit card, etc. 
 
+Step 5.1 Go to tokenizer directory 
+
 ```bash
 cd ../tokenizer/
 ```
 
-Open the file ddb_encrypt_item.py and update the value of the variable **aws_cmk_id** and save the file
+Step 5.2 Open the file ddb_encrypt_item.py and update the value of the variable **aws_cmk_id** and save the file
 
 ```bash
 vi ddb_encrypt_item.py
@@ -113,7 +115,7 @@ vi ddb_encrypt_item.py
 
 As part of Lambda Layer creation, we need dependent libraries for the application code (ddb_encrypt_item.py) to be installed and provided as part of the lambda layer package. Since the libraries are Operating System (OS) dependent so they have to be compiled on native OS supported by Lambda.
 
-Check the dependent libraries mentioned in requirements.txt file
+Step 5.3 Check the dependent libraries mentioned in requirements.txt file
 
 ```bash
 cat requirements.txt 
@@ -126,13 +128,13 @@ dynamodb-encryption-sdk
 cryptography
 ```
 
-Run the script to compile and install the dependent libraries in **dynamodb-client/python/** directory. [More Details on this](https://github.com/pyca/cryptography/issues/3051?source=post_page-----f3e228470659----------------------)
+Step 5.4 Run the script to compile and install the dependent libraries in **dynamodb-client/python/** directory. [More Details on this](https://github.com/pyca/cryptography/issues/3051?source=post_page-----f3e228470659----------------------)
 
 ```bash
 ./get_layer_packages.sh
 ```
 
-Copy the python file to dynamodb-client/python/ which is required for Lambda layer. Lambda layer expects files to be in a specific directory so that it can be used by Lambda function. [More details](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path)
+Step 5.5 Copy the python file to dynamodb-client/python/ which is required for Lambda layer. Lambda layer expects files to be in a specific directory so that it can be used by Lambda function. [More details](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path)
 
 ```bash
 cp ddb_encrypt_item.py dynamodb-client/python/
@@ -142,13 +144,13 @@ cp ddb_encrypt_item.py dynamodb-client/python/
 cp hash_gen.py dynamodb-client/python/
 ```
 
-Build SAM template 
+Step 5.6 Build SAM template 
 
 ```bash
 sam build --use-container 
 ```
 
-Package the SAM template to push the code to S3 Bucket
+Step 5.7 Package the SAM template to push the code to S3 Bucket
 
 ```bash
 sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml
@@ -158,13 +160,13 @@ Expected Output
 
 ```Successfully packaged artifacts and wrote output template to file packaged.yaml```
 
-Deploy the stack using below command. Note the name of the stack is **tokenizer-stack**
+Step 5.8 Deploy the stack using below command. Note the name of the stack is **tokenizer-stack**
 
 ```bash
 sam deploy --template-file ./packaged.yaml --stack-name tokenizer-stack
 ```
 
-Check the output variables for the stack and note the **OutputValue** of **LayerVersionArn** and **DynamoDBArn** from the output
+Step 5.9 Check the output variables for the stack and note the **OutputValue** of **LayerVersionArn** and **DynamoDBArn** from the output
 
 ```bash
 aws cloudformation describe-stacks --stack-name tokenizer-stack
@@ -191,7 +193,7 @@ Sample Output
 
 ## Serverless Application API for Order Creation and Payment Submission 
 
- Go to CustomerApp directory which has Serverless Application
+ Step 6.1 Go to CustomerApp directory which has Serverless Application
  
  ```bash
  cd ../CustomerApp/
@@ -200,13 +202,13 @@ Sample Output
 Let’s build the Serveless application which contains API gateway for API management, Lambda Function for application code, Lambda Layer to import reusable code that you created earlier and Cognito for API authentication
  
 
-Build SAM template 
+Step 6.2 Build SAM template 
 
 ```bash
 sam build --use-container 
 ```
 
-Package the SAM template to push the code to S3 Bucket
+Step 6.3 Package the SAM template to push the code to S3 Bucket
 
 ```bash
 sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml
@@ -216,13 +218,13 @@ Expected Output
 
 ```Successfully packaged artifacts and wrote output template to file packaged.yaml```
 
-Deploy the stack using below command. Note the name of the stack is **app-stack**. Replace the parameters with previously identified values for **LayerVersionArn**, **KMSKeyID** and **DynamoDBArn**
+Step 6.4 Deploy the stack using below command. Note the name of the stack is **app-stack**. Replace the parameters with previously identified values for **LayerVersionArn**, **KMSKeyID** and **DynamoDBArn**
 
 ```bash
 sam deploy --template-file ./packaged.yaml --stack-name app-stack --capabilities CAPABILITY_IAM --parameter-overrides layerarn=<LayerVersionArn> kmsid=<KMSKeyID> dynamodbarn=<DynamoDBArn>
 ```
 
-Check the output variables for the stack and note the **OutputValue** of **PaymentMethodApiURL** , **AccountId** , **UserPoolAppClientId** and **Region** from the output
+Step 6.5 Check the output variables for the stack and note the **OutputValue** of **PaymentMethodApiURL** , **AccountId** , **UserPoolAppClientId** and **Region** from the output
 
 ```bash
 aws cloudformation describe-stacks --stack-name app-stack
@@ -261,7 +263,7 @@ Sample Output
             ]
 ```
 
-Now, you will create Cognito user for authentication. Open **cognito_commands.sh** file and update the values for YOUR_COGNITO_REGION, YOUR_COGNITO_APP_CLIENT_ID and YOUR_EMAIL as below
+Step 6.7 Now, you will create Cognito user for authentication. Open **cognito_commands.sh** file and update the values for YOUR_COGNITO_REGION, YOUR_COGNITO_APP_CLIENT_ID and YOUR_EMAIL as below
 
 ```
 YOUR_COGNITO_REGION=<Region>
@@ -271,7 +273,7 @@ YOUR_COGNITO_APP_CLIENT_ID=<UserPoolAppClientId>
 YOUR_EMAIL=<user-email>
 ```
 
-Run the script ‘cognito_commands.sh’. This script will generate the command required to create new user in Cognito and generate ID token for API authentication.
+Step 6.8 Run the script ‘cognito_commands.sh’. This script will generate the command required to create new user in Cognito and generate ID token for API authentication.
 
 ```bash
 ./cognito_commands.sh
@@ -279,7 +281,7 @@ Run the script ‘cognito_commands.sh’. This script will generate the command 
 
 Copy and paste the command generated by the script in the order specified. 
 
-Command 1
+Step 6.9 Run first Cognito command 
 
 ```bash
 aws cognito-idp sign-up --region <Region> --client-id <UserPoolAppClientId> --username <user-email> --password <password>
@@ -299,7 +301,7 @@ Sample Output -
 }
 ```
 
-Command 2 
+Step 6.10 Run second Cognito command  
 
 **Note – You will get email on the specified email Id. Replace CONFIRMATION_CODE_IN_EMAIL with the verification code in the email for below command**
 
@@ -310,7 +312,7 @@ aws cognito-idp confirm-sign-up --client-id <UserPoolAppClientId>  --username <u
 Sample Output - 
 **Note – There will be no output for this command**
 
-Command 3
+Step 6.11 Run third Cognito command 
 
 ```bash
 aws cognito-idp initiate-auth --auth-flow USER_PASSWORD_AUTH --client-id <UserPoolAppClientId> --auth-parameters USERNAME=<user-email>,PASSWORD=<password>
@@ -335,7 +337,7 @@ Now, we will invoke APIs to test the application. There are two APIs -
 1. **/order** - The first API i.e. ‘order’ is to create the customer order, generate the token for credit card number (using Lambda Layer) and store encrypted credit card number in another DynamoDB table (as specified in the Lambda Layer) and finally store the customer information along with the credit card token in DynamoDB table namely CustomerOrderTable. 
 2. **/paybill** - The second API i.e. ‘paybill’ takes the CustomerOrder number and fetches credit card token from  CustomerOrderTable and calls decrypt method in Lambda Layer to get the deciphered credit card number. 
 
-Let's call /order API to create the order as below. Replace the value of **PaymentMethodApiURL** and **IdToken** with the values identified in the previous step. 
+Step 6.12 Let's call /order API to create the order as below. Replace the value of **PaymentMethodApiURL** and **IdToken** with the values identified in the previous step. 
 
 ```bash
 curl -X POST \
@@ -350,7 +352,7 @@ curl -X POST \
 }'
 ```
 
-Let's call /paybill to pay the bill using the previously provided information. Replace the value of **PaymentMethodApiURL** and **IdToken** with the values identified in the previous step. 
+Step 6.13 Let's call /paybill to pay the bill using the previously provided information. Replace the value of **PaymentMethodApiURL** and **IdToken** with the values identified in the previous step. 
 
 ```bash
 curl -X POST \
@@ -364,7 +366,7 @@ curl -X POST \
 
 Application has created the order with required details and saved the plain text information in DynamoDB table i.e. **CustomerOrdeTable** and encrypted CreditCard information is stored in another DynamoDB table i.e. **CreditCardTokenizerTable** . Now, check the values in both the tables to see the items stored. 
 
-Get the items stored in **CustomerOrdeTable**
+Step 6.14 Get the items stored in **CustomerOrdeTable**
 
 ```bash
 aws dynamodb get-item --table-name CustomerOrderTable --key '{ "CustomerOrder" : { "S": "123456789" }  }'
@@ -391,7 +393,7 @@ Sample Output. Note the value of **CreditCard** from the below output.
 }
 ```
 
-Get the items stored in **CreditCardTokenizerTable**. Replace the value of **CreditCard** and **AccountId** with previously identified values.
+Step 6.15 Get the items stored in **CreditCardTokenizerTable**. Replace the value of **CreditCard** and **AccountId** with previously identified values.
 
 ```bash
 aws dynamodb get-item --table-name CreditCardTokenizerTable --key '{ "Hash_Key" : { "S": "<CreditCard>" }, "Account_Id" : { "S" : "<AccountId>" }  }'
@@ -423,7 +425,7 @@ Sample Output -
 
 ## Clean up and Delete the resources
 
-Delete the three cloud formation stacks created and S3 bucket. Please the value of **unique-s3-bucket-name** with the name of the bucket created earlier in the lab
+Step 7. Delete the three cloud formation stacks created and S3 bucket. Please the value of **unique-s3-bucket-name** with the name of the bucket created earlier in the lab
 
 ```bash
 aws cloudformation delete-stack --stack-name app-stack
