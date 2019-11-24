@@ -1,4 +1,4 @@
-# tokenizer
+##### Lambda Layer for Tokenization and Encryption of Sensitive Data
 
 This session is designed to familiarize you with how to use [Lambda Layers](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html). In this session, you will create solve a common problem for generating token for sensitive data within your application and store encrypted data. You will use AWS Key Management Service to create master encryption key which will be used by DynamoDB client encryption library to generate encryption data keys and this code will be packed into Lambda Layer. This Lambda Layer will be imported into simple ordering application. The application gets the sensitive data from the end user and invokes the imported method to generate unique token to be stored in application database and pass the sensitive data to be stored in encrypted format in another database. When required, this encrypted data will be decrypted by providing the unique token with the required abstraction from the application. 
 
