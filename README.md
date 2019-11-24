@@ -7,12 +7,20 @@ This session is designed to familiarize you with how to use [Lambda Layers](http
 - src/CustomerApp - This folder contains the cloud formation template to create DynamoDB table, [Lambda Function](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html), [API Gateway](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html), [Cognito User Pool](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools.html) and [Cognito Application Client](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-client-apps.html). It also contains the code for the application when required APIs are invoked through API Gateway. 
 
 ## AWS Services Used
-### 1. AWS Lambda
-### 2. Amazon API Gateway
-### 3. Amazon DynamoDB
-### 4. Amazon Cognito
-### 5. AWS Cloud9
-### 6. AWS Key Management Service
+ 1. [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)
+ 2. [Amazon API Gateway](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html)
+ 3. [Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+ 4. [Amazon Cognito](https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html)
+ 5. [AWS Cloud9](https://docs.aws.amazon.com/cloud9/latest/user-guide/welcome.html)
+ 6. [AWS Key Management Service](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html)
+ 
+ 
+ ## Pre-requisite 
+ 1. Access to the above mentioned AWS services within AWS Account
+ 2. This lab assumes that you have logged in as root account into AWS account. If not, then you need to update key policy under template.yaml file under encryption_keys folder. Replace the keyword 'root' with your user in this file.
+ 
+ ## Environment Setup
+ This Lab uses AWS Cloud9 as IDE. 
 
 ## Deploy the sample application
 
