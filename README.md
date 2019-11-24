@@ -1,21 +1,26 @@
-# tokenizer
+# Lambda Layer for Tokenization and Encryption of Sensitive Data
 
-This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
+This session is designed to familiarize you with how to use [Lambda Layers](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html). In this session, you will create solve a common problem for generating token for sensitive data within your application and store encrypted data. You will use [AWS Key Management Service](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) to create [customer managed master  key](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) which will be used by DynamoDB client encryption library to generate [encryption data keys](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#data-keys) and this code will be packed into Lambda Layer. This Lambda Layer will be imported into simple ordering application. The application gets the sensitive data from the end user and invokes the imported method to generate unique token to be stored in application database and pass the sensitive data to be stored in encrypted format in another database. When required, this encrypted data will be decrypted by providing the unique token with the required abstraction from the application. 
 
-- hello_world - Code for the application's Lambda function.
-- events - Invocation events that you can use to invoke the function.
-- tests - Unit tests for the application code. 
-- template.yaml - A template that defines the application's AWS resources.
+- src/encryption_keys - This folder contains the cloud formation template to create KMS key
+- src/tokenizer  - This folder contains the cloud formation template for creating Lambda Layer and [DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) table, [compile and install required dependencies for Lambda layer](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path) and code for encrypting and decrypting provided strings using [DynamoDB encryption client library](https://docs.aws.amazon.com/dynamodb-encryption-client/latest/devguide/what-is-ddb-encrypt.html).
+- src/CustomerApp - This folder contains the cloud formation template to create DynamoDB table, [Lambda Function](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html), [API Gateway](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html), [Cognito User Pool](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools.html) and [Cognito Application Client](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-client-apps.html). It also contains the code for the application when required APIs are invoked through API Gateway. 
 
-The application uses several AWS resources, including Lambda functions and an API Gateway API. These resources are defined in the `template.yaml` file in this project. You can update the template to add AWS resources through the same deployment process that updates your application code.
-
-If you prefer to use an integrated development environment (IDE) to build and test your application, you can use the AWS Toolkit.  
-The AWS Toolkit is an open source plug-in for popular IDEs that uses the SAM CLI to build and deploy serverless applications on AWS. The AWS Toolkit also adds a simplified step-through debugging experience for Lambda function code. See the following links to get started.
-
-* [PyCharm](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [IntelliJ](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [VS Code](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/welcome.html)
-* [Visual Studio](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/welcome.html)
+## AWS Services Used
+ 1. [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)
+ 2. [Amazon API Gateway](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html)
+ 3. [Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+ 4. [Amazon Cognito](https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html)
+ 5. [AWS Cloud9](https://docs.aws.amazon.com/cloud9/latest/user-guide/welcome.html)
+ 6. [AWS Key Management Service](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html)
+ 
+ 
+ ## Pre-requisite 
+ 1. Access to the above mentioned AWS services within AWS Account
+ 2. This lab assumes that you have logged in as root account into AWS account. If not, then you need to update key policy under template.yaml file under encryption_keys folder. Replace the keyword 'root' with your user in this file.
+ 
+ ## Environment Setup
+ This Lab uses AWS Cloud9 as IDE. 
 
 ## Deploy the sample application
 
