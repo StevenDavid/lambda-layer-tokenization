@@ -111,7 +111,7 @@ In this section, we will use the customer managed master key created in the earl
 **Step 5.1** Go to tokenizer directory 
 
 ```bash
-cd ../tokenizer/
+cd /home/ec2-user/lambda-layer-tokenization/src/tokenizer/
 ```
 
 **Step 5.2** Open the file ddb_encrypt_item.py and update the value of the variable **aws_cmk_id** and save the file
@@ -207,7 +207,7 @@ Note the *OutputValue* of *LayerVersionArn* and **DynamoDBArn** from the output
 **Step 6.1** Go to CustomerApp directory which has Serverless Application
  
  ```bash
- cd ../CustomerApp/
+ cd /home/ec2-user/lambda-layer-tokenization/src/CustomerApp/
  ```
  
 Let’s build the Serveless application which contains API gateway for API management, Lambda Function for application code, Lambda Layer to import reusable code that you created earlier and Cognito for API authentication
