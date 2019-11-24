@@ -23,7 +23,7 @@ Provide the details for creating new environment
 
 **Step 4.**
 
-Configure and Use Default Settings for Cloud9 Environment
+Configure and Use Default Settings for Cloud9 Environment and Clink on **Next** button
 
 ![Default Settings](../images/cloud9-config.png)
 
