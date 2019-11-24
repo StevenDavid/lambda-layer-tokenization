@@ -207,3 +207,6 @@ Outputs:
   Region:
     Description: "Region"
     Value: !Ref AWS::Region
+  AccountId:
+    Description: "AWS Account Id"
+    Value: !Ref AWS::AccountId
