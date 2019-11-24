@@ -90,6 +90,7 @@ Successfully created/updated stack - kms-stack
 `aws cloudformation describe-stacks --stack-name kms-stack`
 
 *Sample Output*
+
 Note the **OutputValue** of  **OutputKey** **KMSKeyID** from the output
 
 ```json
@@ -181,6 +182,7 @@ aws cloudformation describe-stacks --stack-name tokenizer-stack
 ```
 
 *Sample Output*
+
 Note the **OutputValue** of **LayerVersionArn** and **DynamoDBArn** from the output
 
 ```json
@@ -241,6 +243,7 @@ aws cloudformation describe-stacks --stack-name app-stack
 ```
 
 *Sample Output*
+
 Note the **OutputValue** of **PaymentMethodApiURL** , **AccountId** , **UserPoolAppClientId** and **Region** from the output
 
 
@@ -388,6 +391,7 @@ aws dynamodb get-item --table-name CustomerOrderTable --key '{ "CustomerOrder" :
 ```
 
 *Sample Output*
+
 Note the value of **CreditCard** from the below output.
 
 ```json
