@@ -59,7 +59,9 @@ sam build --use-container
  
 After the build is successful, below is the output
 
-![sam build](images/sam-build-success.png)
+```bash
+Build Succeeded
+```
  
 Package the SAM template to push the code to S3 Bucket
 
@@ -333,8 +335,105 @@ Now, we will invoke APIs to test the application. There are two APIs -
 1. **/order** - The first API i.e. ‘order’ is to create the customer order, generate the token for credit card number (using Lambda Layer) and store encrypted credit card number in another DynamoDB table (as specified in the Lambda Layer) and finally store the customer information along with the credit card token in DynamoDB table namely CustomerOrderTable. 
 2. **/paybill** - The second API i.e. ‘paybill’ takes the CustomerOrder number and fetches credit card token from  CustomerOrderTable and calls decrypt method in Lambda Layer to get the deciphered credit card number. 
 
+Let's call /order API to create the order as below. Replace the value of **PaymentMethodApiURL** and **IdToken** with the values identified in the previous step. 
 
+```bash
+curl -X POST \
+ PaymentMethodApiURL/order \
+-H 'Authorization: IdToken' \
+-H 'Content-Type: application/json' \
+-d '{
+"CustomerOrder": "123456789",
+"CustomerName": "Amazon Web Services",
+"CreditCard": "0000-0000-0000-0000",
+"Address": "Reinvent2019, Las Vegas, USA"
+}'
+```
 
+Let's call /paybill to pay the bill using the previously provided information. Replace the value of **PaymentMethodApiURL** and **IdToken** with the values identified in the previous step. 
+
+```bash
+curl -X POST \
+ PaymentMethodApiURL/paybill \
+-H 'Authorization: IdToken' \
+-H 'Content-Type: application/json' \
+-d '{
+"CustomerOrder": "123456789"
+}'
+```
+
+Application has created the order with required details and saved the plain text information in DynamoDB table i.e. **CustomerOrdeTable** and encrypted CreditCard information is stored in another DynamoDB table i.e. **CreditCardTokenizerTable** . Now, check the values in both the tables to see the items stored. 
+
+Get the items stored in **CustomerOrdeTable**
+
+```bash
+aws dynamodb get-item --table-name CustomerOrderTable --key '{ "CustomerOrder" : { "S": "123456789" }  }'
+```
+
+Sample Output. Note the value of **CreditCard** from the below output.
+
+```json
+{
+    "Item": {
+        "CustomerOrder": {
+            "S": "123456789"
+        }, 
+        "Address": {
+            "S": "Reinvent2019, Las Vegas, USA"
+        }, 
+        "CustomerName": {
+            "S": "Amazon Web Services"
+        }, 
+        "CreditCard": {
+            "S": "**********"
+        }
+    }
+}
+```
+
+Get the items stored in **CreditCardTokenizerTable**. Replace the value of **CreditCard** and **AccountId** with previously identified values.
+
+```bash
+aws dynamodb get-item --table-name CreditCardTokenizerTable --key '{ "Hash_Key" : { "S": "CreditCard" }, "Account_Id" : { "S" : "AccountId" }  }'
+```
+
+Sample Output - 
+
+```json
+{
+    "Item": {
+        "*amzn-ddb-map-sig*": {
+            "B": "**************"
+        }, 
+        "*amzn-ddb-map-desc*": {
+            "B": "**************"
+        }, 
+        "Hash_Key": {
+            "S": "***************"
+        }, 
+        "Account_Id": {
+            "S": "***************"
+        }, 
+        "CandidateString": {
+            "B": "*****************"
+        }
+    }
+}
+```
+
+## Clean up and Delete the resources
+
+Delete the three cloud formation stacks created and S3 bucket. Please the value of **unique-s3-bucket-name** with the name of the bucket created earlier in the lab
+
+``bash
+aws cloudformation delete-stack --stack-name app-stack
+
+aws cloudformation delete-stack --stack-name tokenizer-stack
+
+aws cloudformation delete-stack --stack-name kms-stack
+
+aws s3 rb s3://unique-s3-bucket-name --force
+```
 
 ## Resources
 
