@@ -59,8 +59,8 @@ sam build --use-container
  
 **Step 4.3** After the build is successful, below is the output
 
-```bash
-Build Succeeded
+```diff
++ Build Succeeded
 ```
  
 **Step 4.4** Package the SAM template to push the code to S3 Bucket
