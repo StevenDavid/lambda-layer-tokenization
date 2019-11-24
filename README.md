@@ -18,123 +18,173 @@ This session is designed to familiarize you with how to use [Lambda Layers](http
  ## Pre-requisite 
  1. Access to the above mentioned AWS services within AWS Account
  2. This lab assumes that you have logged in as root account into AWS account. If not, then you need to update key policy under template.yaml file under encryption_keys folder. Replace the keyword 'root' with your user in this file.
+ 3. This lab uses **python**  programming language for Lambda Layer and Lamnda Function application code.
  
  ## Environment Setup
- This Lab uses AWS Cloud9 as IDE. 
+ This Lab uses AWS Cloud9 as IDE. Complete the Cloud9 Setup in your environment using this [guide](cloud9_setup/README.md)
+ 
+ ## Create S3 Bucket
+ We need [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/Welcome.html) bucket for [AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html). We are going to use AWS SAM in this lab to build and deploy SAM templates (template.yaml). Note that you need to use a unique name for your S3 bucket. Replace unique-s3-bucket-name with the required value.
+ 
+ ```bash
+ aws s3 mb s3://<unique-s3-bucket-name>
+ ```
+ 
+ ## Initial and Clone Git into Cloud9 Environment
+ 
+ Use the below commands to initialize and clone the git repository
+ 
+ `git init`
+ `git clone https://github.com/anujag24/lambda-layer-tokenization.git`
+ 
+ Once the git repository is cloned, check the directories on the cloud9 environment. Sample output below-
+ 
+ ![Git Cloned](images/git-cloned.png)
+ 
+ ## Create Customer Managed KMS Key
+ 
+Go to encryption_keys directory
 
-## Deploy the sample application
+`cd lambda-layer-tokenization/src/encryption_keys`
+ 
+Build the SAM template (template.yaml) under the directory
 
-The Serverless Application Model Command Line Interface (SAM CLI) is an extension of the AWS CLI that adds functionality for building and testing Lambda applications. It uses Docker to run your functions in an Amazon Linux environment that matches Lambda. It can also emulate your application's build environment and API.
+`sam build --use-container`
+ 
+After the build is successful, below is the output
 
-To use the SAM CLI, you need the following tools.
+![sam build](images/sam-build-success.png)
+ 
+Package the SAM template to push the code to S3 Bucket
 
-* AWS CLI - [Install the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) and [configure it with your AWS credentials].
-* SAM CLI - [Install the SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
-* [Python 3 installed](https://www.python.org/downloads/)
-* Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
+`sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml`
+ 
+Expected Output
 
-The SAM CLI uses an Amazon S3 bucket to store your application's deployment artifacts. If you don't have a bucket suitable for this purpose, create one. Replace `BUCKET_NAME` in the commands in this section with a unique bucket name.
+```Successfully packaged artifacts and wrote output template to file packaged.yaml```
+
+Deploy the stack using below command. Note the name of the stack is **kms-stack**
+
+`sam deploy --template-file ./packaged.yaml --stack-name kms-stack`
+
+Expected Output 
+
+```Successfully created/updated stack - kms-stack```
+
+Check the output variables for the stack and note the **OutputValue** of  **OutputKey** **KMSKeyID** from the output
+
+`aws cloudformation describe-stacks --stack-name kms-stack`
+
+Sample Output
+
+```json
+"Outputs": [
+                {
+                    "Description": "ARN for CMS Key created", 
+                    "OutputKey": "KMSKeyID", 
+                    "OutputValue": "*********"
+                }
+            ]
+```
+In this step, you have created customer managed KMS key and gave permissions to the root user to access the key to perform all operations. This master encryption key will be used to generate data encryption keys for encrypting items later in the lab. 
+
+## Lambda Layer for String Tokenization and Encrypted Data Store
+In this section, we will use the customer managed master key created in the earlier stack to create the lambda layer which will be used by application teams to generate token for sensitive data string such as credit card, etc. 
 
 ```bash
-tokenizer$ aws s3 mb s3://BUCKET_NAME
+cd ../tokenizer/
 ```
 
-To prepare the application for deployment, use the `sam package` command.
+Open the file ddb_encrypt_item.py and update the value of the variable **aws_cmk_id** and save the file
 
 ```bash
-tokenizer$ sam package \
-    --output-template-file packaged.yaml \
-    --s3-bucket BUCKET_NAME
+vi ddb_encrypt_item.py
 ```
 
-The SAM CLI creates deployment packages, uploads them to the S3 bucket, and creates a new version of the template that refers to the artifacts in the bucket. 
+As part of Lambda Layer creation, we need dependent libraries for the application code (ddb_encrypt_item.py) to be installed and provided as part of the lambda layer package. Since the libraries are Operating System (OS) dependent so they have to be compiled on native OS supported by Lambda.
 
-To deploy the application, use the `sam deploy` command.
+Check the dependent libraries mentioned in requirements.txt file
 
 ```bash
-tokenizer$ sam deploy \
-    --template-file packaged.yaml \
-    --stack-name tokenizer \
-    --capabilities CAPABILITY_IAM
+cat requirements.txt 
 ```
 
-After deployment is complete you can run the following command to retrieve the API Gateway Endpoint URL:
+Sample Output – 
 
 ```bash
-tokenizer$ aws cloudformation describe-stacks \
-    --stack-name tokenizer \
-    --query 'Stacks[].Outputs[?OutputKey==`HelloWorldApi`]' \
-    --output table
-``` 
+dynamodb-encryption-sdk
+cryptography
+```
 
-## Use the SAM CLI to build and test locally
-
-Build your application with the `sam build` command.
+Run the script to compile and install the dependent libraries in **dynamodb-client/python/** directory. [More Details on this](https://github.com/pyca/cryptography/issues/3051?source=post_page-----f3e228470659----------------------)
 
 ```bash
-tokenizer$ sam build
+./get_layer_packages.sh
 ```
 
-The SAM CLI installs dependencies defined in `hello_world/requirements.txt`, creates a deployment package, and saves it in the `.aws-sam/build` folder.
-
-Test a single function by invoking it directly with a test event. An event is a JSON document that represents the input that the function receives from the event source. Test events are included in the `events` folder in this project.
-
-Run functions locally and invoke them with the `sam local invoke` command.
+Copy the python file to dynamodb-client/python/ which is required for Lambda layer. Lambda layer expects files to be in a specific directory so that it can be used by Lambda function. [More details](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path)
 
 ```bash
-tokenizer$ sam local invoke HelloWorldFunction --event events/event.json
+cp ddb_encrypt_item.py dynamodb-client/python/
 ```
-
-The SAM CLI can also emulate your application's API. Use the `sam local start-api` to run the API locally on port 3000.
 
 ```bash
-tokenizer$ sam local start-api
-tokenizer$ curl http://localhost:3000/
+cp hash_gen.py dynamodb-client/python/
 ```
 
-The SAM CLI reads the application template to determine the API's routes and the functions that they invoke. The `Events` property on each function's definition includes the route and method for each path.
-
-```yaml
-      Events:
-        HelloWorld:
-          Type: Api
-          Properties:
-            Path: /hello
-            Method: get
-```
-
-## Add a resource to your application
-The application template uses AWS Serverless Application Model (AWS SAM) to define application resources. AWS SAM is an extension of AWS CloudFormation with a simpler syntax for configuring common serverless application resources such as functions, triggers, and APIs. For resources not included in [the SAM specification](https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md), you can use standard [AWS CloudFormation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html) resource types.
-
-## Fetch, tail, and filter Lambda function logs
-
-To simplify troubleshooting, SAM CLI has a command called `sam logs`. `sam logs` lets you fetch logs generated by your deployed Lambda function from the command line. In addition to printing the logs on the terminal, this command has several nifty features to help you quickly find the bug.
-
-`NOTE`: This command works for all AWS Lambda functions; not just the ones you deploy using SAM.
+Build SAM template 
 
 ```bash
-tokenizer$ sam logs -n HelloWorldFunction --stack-name tokenizer --tail
+sam build --use-container 
 ```
 
-You can find more information and examples about filtering Lambda function logs in the [SAM CLI Documentation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-logging.html).
-
-## Unit tests
-
-Tests are defined in the `tests` folder in this project. Use PIP to install the [pytest](https://docs.pytest.org/en/latest/) and run unit tests.
+Package the SAM template to push the code to S3 Bucket
 
 ```bash
-tokenizer$ pip install pytest pytest-mock --user
-tokenizer$ python -m pytest tests/ -v
+sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml
 ```
+ 
+Expected Output
 
-## Cleanup
+```Successfully packaged artifacts and wrote output template to file packaged.yaml```
 
-To delete the sample application and the bucket that you created, use the AWS CLI.
+Deploy the stack using below command. Note the name of the stack is **tokenizer-stack**
 
 ```bash
-tokenizer$ aws cloudformation delete-stack --stack-name tokenizer
-tokenizer$ aws s3 rb s3://BUCKET_NAME
+sam deploy --template-file ./packaged.yaml --stack-name tokenizer-stack
 ```
+
+Check the output variables for the stack and note the **OutputValue** of **TokenizeData** and **DynamoDBArn** from the output
+
+```bash
+aws cloudformation describe-stacks --stack-name tokenizer-stack
+```
+
+Sample Output
+
+```json
+"Outputs": [
+                {
+                    "Description": "ARN for the published Layer version", 
+                    "ExportName": "TokenizeData", 
+                    "OutputKey": "LayerVersionArn", 
+                    "OutputValue": "***********"
+                }, 
+                {
+                    "Description": "ARN for DynamoDB Table", 
+                    "OutputKey": "DynamoDBArn", 
+                    "OutputValue": "***********/CreditCardTokenizerTable"
+                }
+
+            ]
+```
+
+## Serverless Application API for Order Creation and Payment Submission 
+
+ 
+ 
+ 
+
 
 ## Resources
 
