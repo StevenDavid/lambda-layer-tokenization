@@ -35,7 +35,8 @@ def lambda_handler(event, context):
         return {
             "statusCode": 200,
             "body": json.dumps({
-                "message": "Order Created Successfully"
+                "message": "Order Created Successfully",
+                "CreditCardToken" : tokenize_request['Hash_Key']
             }),
         }
         
@@ -69,12 +70,13 @@ def lambda_handler(event, context):
                 index_key['Hash_Key'] = item['CreditCard']
                 index_key['Account_Id'] = ACCOUNT_ID
                 response2 = ddb_encrypt_item.get_decrypted_item(index_key,table_name)
-                 ### Add your code to invoke bill payment API
-                print(response2)
+                ### Add your code to invoke bill payment API
+                ##print(response2)
                 return {
                     "statusCode": 200,
                      "body": json.dumps({
-                    "message": "Payment Submitted Successfully"
+                    "message": "Payment Submitted Successfully",
+                    "CreditCard Charged" : response2['Item']['CandidateString']
                     }),
                     }
         
@@ -85,5 +87,6 @@ def lambda_handler(event, context):
                 "message": "Hello from Lambda!"
             }),
         }
+
 
 
