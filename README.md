@@ -85,11 +85,12 @@ Successfully packaged artifacts and wrote output template to file packaged.yaml
 Successfully created/updated stack - kms-stack
 ```
 
-**Step 4.7** Check the output variables for the stack and note the **OutputValue** of  **OutputKey** **KMSKeyID** from the output
+**Step 4.7** Check the output variables for the stack 
 
 `aws cloudformation describe-stacks --stack-name kms-stack`
 
 *Sample Output*
+Note the **OutputValue** of  **OutputKey** **KMSKeyID** from the output
 
 ```json
 "Outputs": [
@@ -173,13 +174,14 @@ Successfully packaged artifacts and wrote output template to file packaged.yaml
 sam deploy --template-file ./packaged.yaml --stack-name tokenizer-stack
 ```
 
-**Step 5.9** Check the output variables for the stack and note the **OutputValue** of **LayerVersionArn** and **DynamoDBArn** from the output
+**Step 5.9** Check the output variables for the stack
 
 ```bash
 aws cloudformation describe-stacks --stack-name tokenizer-stack
 ```
 
 *Sample Output*
+Note the **OutputValue** of **LayerVersionArn** and **DynamoDBArn** from the output
 
 ```json
 "Outputs": [
@@ -225,19 +227,22 @@ sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.
 
 ```Successfully packaged artifacts and wrote output template to file packaged.yaml```
 
-**Step 6.4** Deploy the stack using below command. Note the name of the stack is **app-stack**. Replace the parameters with previously identified values for **LayerVersionArn**, **KMSKeyID** and **DynamoDBArn**
+**Step 6.4** Deploy the stack using below command. Note the name of the stack is **app-stack**. 
+
+Replace the parameters with previously identified values for **LayerVersionArn**, **KMSKeyID** and **DynamoDBArn**
 
 ```bash
 sam deploy --template-file ./packaged.yaml --stack-name app-stack --capabilities CAPABILITY_IAM --parameter-overrides layerarn=<LayerVersionArn> kmsid=<KMSKeyID> dynamodbarn=<DynamoDBArn>
 ```
 
-**Step 6.5** Check the output variables for the stack and note the **OutputValue** of **PaymentMethodApiURL** , **AccountId** , **UserPoolAppClientId** and **Region** from the output
-
+**Step 6.5** Check the output variables for the stack
 ```bash
 aws cloudformation describe-stacks --stack-name app-stack
 ```
 
 *Sample Output*
+Note the **OutputValue** of **PaymentMethodApiURL** , **AccountId** , **UserPoolAppClientId** and **Region** from the output
+
 
 ```json
 "Outputs": [
@@ -436,7 +441,7 @@ aws dynamodb get-item --table-name CreditCardTokenizerTable --key '{ "Hash_Key" 
 
 ## Clean up and Delete the resources
 
-**Step 7.** Delete the three cloud formation stacks created and S3 bucket. Please the value of **unique-s3-bucket-name** with the name of the bucket created earlier in the lab
+**Step 7.** Delete the three cloud formation stacks created and S3 bucket. Replace the value of **unique-s3-bucket-name** with the name of the bucket created earlier in the lab
 
 ```bash
 aws cloudformation delete-stack --stack-name app-stack
