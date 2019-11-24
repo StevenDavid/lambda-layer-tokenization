@@ -91,7 +91,7 @@ Successfully created/updated stack - kms-stack
 
 *Sample Output*
 
-Note the **OutputValue** of  **OutputKey** **KMSKeyID** from the output
+Note the *OutputValue* of  *OutputKey* **KMSKeyID** from the output
 
 ```json
 "Outputs": [
@@ -135,13 +135,13 @@ dynamodb-encryption-sdk
 cryptography
 ```
 
-**Step 5.4** Run the script to compile and install the dependent libraries in **dynamodb-client/python/** directory. [More Details on this](https://github.com/pyca/cryptography/issues/3051?source=post_page-----f3e228470659----------------------)
+**Step 5.4** Run the script to compile and install the dependent libraries in *dynamodb-client/python/* directory. [More Details on this](https://github.com/pyca/cryptography/issues/3051?source=post_page-----f3e228470659----------------------)
 
 ```bash
 ./get_layer_packages.sh
 ```
 
-**Step 5.5** Copy the python file to dynamodb-client/python/ which is required for Lambda layer. Lambda layer expects files to be in a specific directory so that it can be used by Lambda function. [More details](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path)
+**Step 5.5** Copy the python file to *dynamodb-client/python/* which is required for Lambda layer. Lambda layer expects files to be in a specific directory so that it can be used by Lambda function. [More details](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path)
 
 ```bash
 cp ddb_encrypt_item.py dynamodb-client/python/
@@ -183,7 +183,7 @@ aws cloudformation describe-stacks --stack-name tokenizer-stack
 
 *Sample Output*
 
-Note the **OutputValue** of **LayerVersionArn** and **DynamoDBArn** from the output
+Note the *OutputValue* of *LayerVersionArn* and **DynamoDBArn** from the output
 
 ```json
 "Outputs": [
@@ -244,7 +244,7 @@ aws cloudformation describe-stacks --stack-name app-stack
 
 *Sample Output*
 
-Note the **OutputValue** of **PaymentMethodApiURL** , **AccountId** , **UserPoolAppClientId** and **Region** from the output
+Note the *OutputValue* of *OutputKey* **PaymentMethodApiURL** , **AccountId** , **UserPoolAppClientId** and **Region** from the output
 
 
 ```json
@@ -278,7 +278,7 @@ Note the **OutputValue** of **PaymentMethodApiURL** , **AccountId** , **UserPool
             ]
 ```
 
-**Step 6.7** Now, you will create Cognito user for authentication. Open **cognito_commands.sh** file and update the values for YOUR_COGNITO_REGION, YOUR_COGNITO_APP_CLIENT_ID and YOUR_EMAIL as below
+**Step 6.7** Now, you will create Cognito user for authentication. Open *cognito_commands.sh* file and update the values for YOUR_COGNITO_REGION, YOUR_COGNITO_APP_CLIENT_ID and YOUR_EMAIL as below
 
 ```
 YOUR_COGNITO_REGION=<Region>
@@ -288,7 +288,7 @@ YOUR_COGNITO_APP_CLIENT_ID=<UserPoolAppClientId>
 YOUR_EMAIL=<user-email>
 ```
 
-**Step 6.8** Run the script ‘cognito_commands.sh’. This script will generate the command required to create new user in Cognito and generate ID token for API authentication.
+**Step 6.8** Run the script *cognito_commands.sh*. This script will generate the command required to create new user in Cognito and generate ID token for API authentication.
 
 ```bash
 ./cognito_commands.sh
@@ -352,8 +352,8 @@ Note the value of **IdToken** for next steps
 ```
 
 Now, we will invoke APIs to test the application. There are two APIs - 
-1. **/order** - The first API i.e. ‘order’ is to create the customer order, generate the token for credit card number (using Lambda Layer) and store encrypted credit card number in another DynamoDB table (as specified in the Lambda Layer) and finally store the customer information along with the credit card token in DynamoDB table namely CustomerOrderTable. 
-2. **/paybill** - The second API i.e. ‘paybill’ takes the CustomerOrder number and fetches credit card token from  CustomerOrderTable and calls decrypt method in Lambda Layer to get the deciphered credit card number. 
+1. **/order** - The first API i.e. *‘order’* is to create the customer order, generate the token for credit card number (using Lambda Layer) and store encrypted credit card number in another DynamoDB table (as specified in the Lambda Layer) and finally store the customer information along with the credit card token in DynamoDB table namely CustomerOrderTable. 
+2. **/paybill** - The second API i.e. *‘paybill’* takes the CustomerOrder number and fetches credit card token from  CustomerOrderTable and calls decrypt method in Lambda Layer to get the deciphered credit card number. 
 
 **Step 6.12** Let's call /order API to create the order as below. Replace the value of **PaymentMethodApiURL** and **IdToken** with the values identified in the previous step. 
 
@@ -370,7 +370,7 @@ curl -X POST \
 }'
 ```
 
-**Step 6.13** Let's call /paybill to pay the bill using the previously provided information. Replace the value of **PaymentMethodApiURL** and **IdToken** with the values identified in the previous step. 
+**Step 6.13** Let's call */paybill* to pay the bill using the previously provided information. Replace the value of **PaymentMethodApiURL** and **IdToken** with the values identified in the previous step. 
 
 ```bash
 curl -X POST \
