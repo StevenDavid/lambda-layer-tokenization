@@ -26,6 +26,9 @@ This repository has the following directories:
  2. This module assumes that you have logged in as root user into AWS account. If not, then we need to update `key policy` under [template.yaml](src/encryption_keys/template.yaml) file under encryption_keys folder. Replace `root` with your user in this file.
  3. Familiarity with **python**  programming language is recommended as the application code is written in python.
  
+ ## Architecture Diagram
+ ![Architecture] (images/Lambda Layer.jpeg)
+ 
  ## Step 1: Environment Setup
 This module uses AWS Cloud9 as Integrated Development Environment (IDE) for writing, running and debugging code on the cloud. Complete the Cloud9 Setup in AWS using this [guide](cloud9_setup/README.md)
  
