@@ -47,7 +47,7 @@ This module uses AWS Cloud9 as Integrated Development Environment (IDE) for writ
  
  Once the git repository is cloned, check the directories on the cloud9 environment. Sample output below-
  
- ![Git Cloned](images/git-cloned.png)
+ ![Git Cloned](images/git-clone-results.png)
  
  ## Create Customer Managed KMS Key
  
