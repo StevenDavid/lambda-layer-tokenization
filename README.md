@@ -1,12 +1,18 @@
 # Lambda Layer for Tokenization and Encryption of Sensitive Data
 
-This session is designed to familiarize you with how to use [Lambda Layers](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html). In this session, you will create solve a common problem for generating token for sensitive data within your application and store encrypted data. You will use [AWS Key Management Service](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) to create [customer managed master  key](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) which will be used by DynamoDB client encryption library to generate [encryption data keys](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#data-keys) and this code will be packed into Lambda Layer. This Lambda Layer will be imported into simple ordering application. The application gets the sensitive data from the end user and invokes the imported method to generate unique token to be stored in application database and pass the sensitive data to be stored in encrypted format in another database. When required, this encrypted data will be decrypted by providing the unique token with the required abstraction from the application. 
+This module is designed to introduce you to using [Lambda Layers](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html). Lambda Layers allow you to zip your dependencies and custom runtime to be used by [Lambda Function](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) which is a compute service that lets you run code without provisioning or managing servers. In this module, you will learn how to use Lambda Layers for generating token for sensitive data within your application and store the encrypted data. You will use [AWS Key Management Service](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) which  is a managed service that makes it easy for you to create and control the encryption keys used to encrypt your data. You will create [customer managed master  key](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) which will be used by [DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) client encryption library to generate [encryption data keys](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#data-keys). You will use cloud formation template to create required AWS resources and add your encryption logic python file(s), which will be packaged together as a Lambda Layer. This Lambda Layer will be imported into Lambda Function. In this module, as an exmaple we will use an application called *simple ordering application* which creates a customer order and processes payment. The application gets the sensitive data (example, credit card information) from the end user and invokes the imported layer to generate unique token(s). This token is stored in application database (DynamoDB) and the sensitive data is provided to Lambda Layer which encrypts this data and stores in another database (DynamoDB). When required, this encrypted data will be decrypted by providing the unique token which was saved in the application database.
 
-- src/encryption_keys - This folder contains the cloud formation template to create KMS key
-- src/tokenizer  - This folder contains the cloud formation template for creating Lambda Layer and [DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) table, [compile and install required dependencies for Lambda layer](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path) and code for encrypting and decrypting provided strings using [DynamoDB encryption client library](https://docs.aws.amazon.com/dynamodb-encryption-client/latest/devguide/what-is-ddb-encrypt.html).
-- src/CustomerApp - This folder contains the cloud formation template to create DynamoDB table, [Lambda Function](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html), [API Gateway](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html), [Cognito User Pool](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools.html) and [Cognito Application Client](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-client-apps.html). It also contains the code for the application when required APIs are invoked through API Gateway. 
+This repository has the following directories:
+- *src/encryption_keys* - This folder contains the cloud formation template to create customer managed master key.
+- *src/tokenizer*  - This folder contains: 
+  * cloud formation template for creating Lambda Layer and DynamoDB table
+  * script to [compile and install required dependencies for Lambda layer](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path)
+  * code for encrypting and decrypting provided sensitive data using [DynamoDB encryption client library](https://docs.aws.amazon.com/dynamodb-encryption-client/latest/devguide/what-is-ddb-encrypt.html).
+- *src/CustomerApp* - This folder contains: 
+  * cloud formation template to create DynamoDB table, [Lambda Function](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html), APIs in [API Gateway](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html), [Cognito User Pool](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools.html) and [Cognito Application Client](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-client-apps.html). 
+  * code for *simple ordering application* 
 
-## AWS Services Used
+## AWS services used in this module
  1. [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)
  2. [Amazon API Gateway](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html)
  3. [Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
@@ -15,24 +21,24 @@ This session is designed to familiarize you with how to use [Lambda Layers](http
  6. [AWS Key Management Service](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html)
  
  
- ## Pre-requisite 
+ ## Pre-requisites 
  1. Access to the above mentioned AWS services within AWS Account
- 2. This lab assumes that you have logged in as root account into AWS account. If not, then you need to update key policy under template.yaml file under encryption_keys folder. Replace the keyword 'root' with your user in this file.
- 3. This lab uses **python**  programming language for Lambda Layer and Lamnda Function application code.
+ 2. This module assumes that you have logged in as root user into your AWS account. If not, then you need to update `key policy` under [template.yaml](src/encryption_keys/template.yaml) file under encryption_keys folder. Replace `root` with your user in this file.
+ 3. Familiarity with **python**  programming language is recommended as the application code is written in python.
  
- ## Environment Setup
- **Step 1.** This Lab uses AWS Cloud9 as IDE. Complete the Cloud9 Setup in your environment using this [guide](cloud9_setup/README.md)
+ ## Step 1: Environment Setup
+This module uses AWS Cloud9 as Integrated Development Environment (IDE) for writing, running and debugging code on the cloud. Complete the Cloud9 Setup in your environment using this [guide](cloud9_setup/README.md)
  
- ## Create S3 Bucket
- **Step 2.**  We need [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/Welcome.html) bucket for [AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html). We are going to use AWS SAM in this lab to build and deploy SAM templates (template.yaml). Note that you need to use a unique name for your S3 bucket. Replace unique-s3-bucket-name with the required value.
+ ## Step 2: Create S3 Bucket
+ You need [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/Welcome.html) bucket for [AWS Serverless Application Model(SAM)](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html). You are going to use AWS SAM, an open source framework for building serverless applications on AWS, to build and deploy SAM templates (template.yaml). **Note** that you need to use a unique name for your S3 bucket. Replace `unique-s3-bucket-name` with a unique value in the following code to create your S3 bucket.
  
  ```bash
  aws s3 mb s3://<unique-s3-bucket-name>
  ```
  
- ## Initialize and Clone Git into Cloud9 Environment
+ ## Step 3: Initialize and Clone Git into Cloud9 Environment
  
- **Step 3.** Use the below commands to initialize and clone the git repository
+ Use the below code to initialize and clone this git repository
  
  ```bash
  git init
