@@ -1,6 +1,6 @@
 # Lambda Layer for Tokenization and Encryption of Sensitive Data
 
-This module is designed to introduce we to using [Lambda Layers](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html). Lambda Layers allow we to zip wer dependencies and custom runtime to be used by [Lambda Function](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) which is a compute service that lets we run code without provisioning or managing servers. In this module, we will learn how to use Lambda Layers for generating token for sensitive data within wer application and store the encrypted data. You will use [AWS Key Management Service](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) which  is a managed service that makes it easy for we to create and control the encryption keys used to encrypt wer data. You will create [customer managed master  key](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) which will be used by [DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) client encryption library to generate [encryption data keys](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#data-keys). You will use cloud formation template to create required AWS resources and add wer encryption logic python file(s), which will be packaged together as a Lambda Layer. This Lambda Layer will be imported into Lambda Function. In this module, as an exmaple we will use an application called *simple ordering application* which creates a customer order and processes payment. The application gets the sensitive data (example, credit card information) from the end user and invokes the imported layer to generate unique token(s). This token is stored in application database (DynamoDB) and the sensitive data is provided to Lambda Layer which encrypts this data and stores in another database (DynamoDB). When required, this encrypted data will be decrypted by providing the unique token which was saved in the application database.
+This module is designed to introduce we to using [Lambda Layers](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html). Lambda Layers allow we to zip wer dependencies and custom runtime to be used by [Lambda Function](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) which is a compute service that lets we run code without provisioning or managing servers. In this module, we will learn how to use Lambda Layers for generating token for sensitive data within wer application and store the encrypted data. We will use [AWS Key Management Service](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) which  is a managed service that makes it easy for we to create and control the encryption keys used to encrypt wer data. We will create [customer managed master  key](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) which will be used by [DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) client encryption library to generate [encryption data keys](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#data-keys). We will use cloud formation template to create required AWS resources and add wer encryption logic python file(s), which will be packaged together as a Lambda Layer. This Lambda Layer will be imported into Lambda Function. In this module, as an exmaple we will use an application called *simple ordering application* which creates a customer order and processes payment. The application gets the sensitive data (example, credit card information) from the end user and invokes the imported layer to generate unique token(s). This token is stored in application database (DynamoDB) and the sensitive data is provided to Lambda Layer which encrypts this data and stores in another database (DynamoDB). When required, this encrypted data will be decrypted by providing the unique token which was saved in the application database.
 
 This repository has the following directories:
 - *src/encryption_keys* - This folder contains the cloud formation template to create customer managed master key.
@@ -30,7 +30,7 @@ This repository has the following directories:
 This module uses AWS Cloud9 as Integrated Development Environment (IDE) for writing, running and debugging code on the cloud. Complete the Cloud9 Setup in wer environment using this [guide](cloud9_setup/README.md)
  
  ## Step 2: Create S3 Bucket
- You need [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/Welcome.html) bucket for [AWS Serverless Application Model(SAM)](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html). You are going to use AWS SAM, an open source framework for building serverless applications on AWS, to build and deploy SAM templates (template.yaml). **Note** that we need to use a unique name for wer S3 bucket. Replace `unique-s3-bucket-name` with a unique value in the following code to create wer S3 bucket.
+ We need [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/Welcome.html) bucket for [AWS Serverless Application Model(SAM)](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html). We are going to use AWS SAM, an open source framework for building serverless applications on AWS, to build and deploy SAM templates (template.yaml). **Note** that we need to use a unique name for wer S3 bucket. Replace `unique-s3-bucket-name` with a unique value in the following code to create wer S3 bucket.
  
  ```bash
  aws s3 mb s3://<unique-s3-bucket-name>
@@ -45,7 +45,7 @@ This module uses AWS Cloud9 as Integrated Development Environment (IDE) for writ
  git clone https://github.com/anujag24/lambda-layer-tokenization.git
  ```
  
- Once the git repository is cloned, check the directories on the cloud9 environment. You should see the following structure:
+ Once the git repository is cloned, check the directories on the cloud9 environment. We should see the following structure:
  
  ![Git Cloned](images/git-clone-results.png)
  
@@ -132,7 +132,7 @@ As part of Lambda Layer creation, we need dependent libraries for the applicatio
 ```bash
 cat requirements.txt 
 ```
-You should see
+We should see
 
 ```bash
 dynamodb-encryption-sdk
@@ -173,7 +173,7 @@ After the build is successful, we should see
 sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml
 ```
  
-You should see
+We should see
 
 ```diff
 Successfully packaged artifacts and wrote output template to file packaged.yaml
@@ -191,7 +191,7 @@ sam deploy --template-file ./packaged.yaml --stack-name tokenizer-stack
 aws cloudformation describe-stacks --stack-name tokenizer-stack
 ```
 
-You should see
+We should see
 
 ```json
 "Outputs": [
@@ -242,7 +242,7 @@ After the build is successful, we should see
 sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml
 ```
  
-You should see
+We should see
 
 ```Successfully packaged artifacts and wrote output template to file packaged.yaml```
 
@@ -260,7 +260,7 @@ sam deploy --template-file ./packaged.yaml --stack-name app-stack --capabilities
 aws cloudformation describe-stacks --stack-name app-stack
 ```
 
-You should see
+We should see
 
 
 ```json
@@ -302,7 +302,7 @@ Note the *OutputValue* of *OutputKey* `PaymentMethodApiURL` , `AccountId` , `Use
 aws cognito-idp sign-up --region <Region> --client-id <UserPoolAppClientId> --username <user-email> --password <password>
 ```
 
-You should see
+We should see
 
 ```json
 {
@@ -332,7 +332,7 @@ aws cognito-idp confirm-sign-up --client-id <UserPoolAppClientId>  --username <u
 aws cognito-idp initiate-auth --auth-flow USER_PASSWORD_AUTH --client-id <UserPoolAppClientId> --auth-parameters USERNAME=<user-email>,PASSWORD=<password>
 ```
 
-You should see
+We should see
 
 
 ```json 
@@ -389,7 +389,7 @@ Application has created the order with required details and saved the plain text
 aws dynamodb get-item --table-name CustomerOrderTable --key '{ "CustomerOrder" : { "S": "123456789" }  }'
 ```
 
-You should see
+We should see
 
 ```json
 {
@@ -418,7 +418,7 @@ Note the value of `CreditCard`.
 aws dynamodb get-item --table-name CreditCardTokenizerTable --key '{ "Hash_Key" : { "S": "<CreditCard>" }, "Account_Id" : { "S" : "<AccountId>" }  }'
 ```
 
-You should see
+We should see
 
 ```json
 {
