@@ -1,5 +1,6 @@
 # Lambda Layer for Tokenization and Encryption of Sensitive Data
 
+
 This module is designed to introduce using [Lambda Layers](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html). Lambda Layers package dependencies and custom runtime to be used by [Lambda Function](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) which is a compute service that lets you run code without provisioning or managing servers. In this module, we will learn how to use Lambda Layers for generating token for sensitive data within the application and store the encrypted data. We will use [AWS Key Management Service](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) which  is a managed service that makes it easy to create and control the encryption keys used to encrypt data. We will create [customer managed master  key](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) which will be used by [DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) client encryption library to generate [encryption data keys](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#data-keys). We will use cloud formation template to create required AWS resources and add encryption logic python file(s), which will be packaged together as a Lambda Layer. This Lambda Layer will be imported into Lambda Function. In this module, as an example we will use an application called *simple ordering application* which creates a customer order and processes payment. The application gets the sensitive data (example, credit card information) from the end user and invokes the imported layer to generate unique token(s). This token is stored in application database (DynamoDB) and the sensitive data is provided to Lambda Layer which encrypts this data and stores in another database (DynamoDB). When required, this encrypted data will be decrypted by providing the unique token which was saved in the application database.
 
 This repository has the following directories:
@@ -463,5 +464,7 @@ aws s3 rb s3://<unique-s3-bucket-name> --force
 
 
 ## Resources
+
+Tokenization vs Encryption - Tokenization is an alternative to encryption that helps to protect certain parts of the data that has high sensitivity or a specific regulatory compliance requirement such as PCI. Separating the sensitive data into its own dedicated, secured data store and using tokens in its place helps you avoid the potential cost and complexity of end-to-end encryption. It also allows you to reduce risk with temporary, one-time-use tokens. [More Info](https://aws.amazon.com/blogs/database/best-practices-for-securing-sensitive-data-in-aws-data-stores/)
 
 See the [AWS SAM developer guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) for an introduction to SAM specification, the SAM CLI, and serverless application concepts.
