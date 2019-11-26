@@ -27,17 +27,20 @@ Configure and Use Default Settings for Cloud9 Environment and Click on **Next St
 
 ![Default Settings](../images/cloud9-config.png)
 
+**Step 5.**
+
 Click on **Create Environment** button 
 
 ![CreateEnv](../images/cloud9-env.png)
 
 
-**Step 5.**
+**Step 6.**
 
 It will take couple of minutes to create the environment, Below screen appears once done.
 
 ![Created](../images/cloud9-screen.png)
 
+Note that the terminal highlighted will be used for executing the code in the next steps.
 
 You have created Cloud9 Environment. Go back to [PreviousPage](../README.md)
 
