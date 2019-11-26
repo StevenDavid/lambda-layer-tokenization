@@ -51,7 +51,7 @@ This module uses AWS Cloud9 as Integrated Development Environment (IDE) for writ
  ```
  The output will look like 
  
- ```python
+ ```bash
 make_bucket: <unique-s3-bucket-name>
  ```
  
@@ -91,11 +91,9 @@ The output will look like
 sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml
 ```
  
-Once done, the output will look like
+The output will look like 
+![package-success](images/sam-package.png)
 
-```bash
-Successfully packaged artifacts and wrote output template to file packaged.yaml
-```
 
 **Step 4.4** Packaged.yaml (created in the above step) will be used to deploy the code and resources to AWS. Wait for the stack creation to complete. Note the name of the stack is `kms-stack`
 
@@ -103,9 +101,8 @@ Successfully packaged artifacts and wrote output template to file packaged.yaml
 
 Once done, the output will look like
 
-```bash
-Successfully created/updated stack - kms-stack
-```
+The output will look like 
+![deploy-success](images/kms-stack.png)
 
 **Step 4.5** Get the output variables of the stack 
 
@@ -123,7 +120,7 @@ Once done, the output will look like
             ]
 ```
 
-Note the *OutputValue* of  *OutputKey* `KMSKeyID` from the output.
+Note the *OutputValue* of  *OutputKey* `KMSKeyID` from the output for later steps.
 
 Here, in Step 4, the cloud formation stack created customer managed KMS key and gave permissions to the root user to access the key. This master encryption key will be used to generate data encryption keys for encrypting items later in the module. 
 
@@ -161,7 +158,11 @@ cryptography
 ./get_layer_packages.sh
 ```
 
+The output will look like 
+![layer-installed](images/layer-installed.png)
+
 **Step 5.5** Copy the python files `ddb_encrypt_item.py` and `hash_gen.py` to *dynamodb-client/python/*. This is required since Lambda Layer expects files to be in a specific directory to be used by Lambda function. [More details on this](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path)
+
 `ddb_encrypt_item.py` – This file contains the logic to encrypt and decrypt the plain text and store encrypted information in DynamoDB table.
 `hash_gen.py` - This file contains the logic to create UUID tokens for strings which will be provided to the end application in exchange for sensitive data, for example, credit card. 
 
@@ -191,15 +192,16 @@ sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.
  
 The output will look like 
 
-```diff
-Successfully packaged artifacts and wrote output template to file packaged.yaml
-```
+![package-success](images/tokenizer-stack-package.png)
 
 **Step 5.8** Similar to Step 4.4, create cloud formation stack using the below code to create resources and deploy your code. Wait for the stack creation to complete. Note the name of the stack is `tokenizer-stack`
 
 ```bash
 sam deploy --template-file ./packaged.yaml --stack-name tokenizer-stack
 ```
+
+The output will look like 
+![tokenizer-stack](images/tokenizer-stack.png)
 
 **Step 5.9** Get the output variables of the stack
 
@@ -226,7 +228,7 @@ The output will look like
             ]
 ```
 
-Note the *OutputValue* of `LayerVersionArn` and `DynamoDBArn` from the output.
+Note the *OutputValue* of `LayerVersionArn` and `DynamoDBArn` from the output for later steps.
 
 Here, in Step 5, the cloud formation stack created DynamoDB table to store encrypted data as well as Lamda Layer for encrypting/decrypting the sensitive data and generating unique tokens for sensitive data.
 
@@ -258,8 +260,7 @@ sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.
 ```
  
 The output will look like 
-
-```Successfully packaged artifacts and wrote output template to file packaged.yaml```
+![package-success](images/sam-package.png)
 
 **Step 6.4** Similar to Step 4.4, deploy code and resources to AWS using the packaged.yaml just created with the following code. Note the name of the stack is `app-stack`. 
 
@@ -415,14 +416,14 @@ The output will look like
         "CustomerName": {
             "S": "Amazon Web Services"
         }, 
-        "CreditCard": {
+        "CreditCardToken": {
             "S": "**********"
         }
     }
 }
 ```
 
-Note the value of `CreditCard`. It will be the generated token value and not actual `CreditCard` provided by the end user.
+Note the value of `CreditCardToken`. It will be the generated token value and not actual `CreditCard` provided by the end user.
 
 **Step 6.15** Get the items stored in `CreditCardTokenizerTable`. Replace the value of `CreditCard` (Step 6.14) and `AccountId` (Step 6.5) with previously identified values.
 
