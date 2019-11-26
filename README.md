@@ -1,7 +1,14 @@
 # Lambda Layer for Tokenization and Encryption of Sensitive Data
 
+In this module, we will learn on how to use [Lambda Layers](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html) to streamline development for Serveless applications. Lambda Layers package dependencies and custom runtime which can be imported by Lambda Function. This module is designed to enable development of applications by loosely coupling security from the application so that only security team has access to sensitive data. Application team can develop applications which can import the Lambda Layer provided by security team. This eases the development and reuse of code across teams. 
 
-This module is designed to introduce using [Lambda Layers](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html). Lambda Layers package dependencies and custom runtime to be used by [Lambda Function](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) which is a compute service that lets you run code without provisioning or managing servers. In this module, we will learn how to use Lambda Layers for generating token for sensitive data within the application and store the encrypted data. We will use [AWS Key Management Service](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) which  is a managed service that makes it easy to create and control the encryption keys used to encrypt data. We will create [customer managed master  key](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) which will be used by [DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) client encryption library to generate [encryption data keys](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#data-keys). We will use cloud formation template to create required AWS resources and add encryption logic python file(s), which will be packaged together as a Lambda Layer. This Lambda Layer will be imported into Lambda Function. In this module, as an example we will use an application called *simple ordering application* which creates a customer order and processes payment. The application gets the sensitive data (example, credit card information) from the end user and invokes the imported layer to generate unique token(s). This token is stored in application database (DynamoDB) and the sensitive data is provided to Lambda Layer which encrypts this data and stores in another database (DynamoDB). When required, this encrypted data will be decrypted by providing the unique token which was saved in the application database.
+## Tokenization vs Encryption 
+
+Tokenization is an alternative to encryption that helps to protect certain parts of the data that has high sensitivity or a specific regulatory compliance requirement such as PCI. Separating the sensitive data into its own dedicated, secured data store and using tokens in its place helps you avoid the potential cost and complexity of end-to-end encryption. It also allows you to reduce risk with temporary, one-time-use tokens. [More Info](https://aws.amazon.com/blogs/database/best-practices-for-securing-sensitive-data-in-aws-data-stores/)
+
+## How? 
+
+We will use [AWS Key Management Service](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) to create and control the encryption keys. We will then create [customer managed master  key](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) which will be used by [DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) client encryption library to encrypt the plain text. We will also use cloud formation template to create DynamoDB Table and Lambda Layer which contains  encryption logic and dependent libraries. This Lambda Layer will be imported into Lambda Function which handles the request and response for our application. The application gets the sensitive data (for example, credit card information) from the end user, passes it to Lambda function that invokes the imported layer to exchange sensitive data with unique token. This token is stored in application database (DynamoDB) and the sensitive data is stored by Lambda Layer in separate database (DynamoDB) which can be managed by security team. When required, the encrypted data can be decrypted by providing the token stored in the application database.
 
 This repository has the following directories:
 - *src/encryption_keys* - This folder contains the cloud formation template to create customer managed master key.
@@ -26,7 +33,7 @@ This repository has the following directories:
  1. Access to the above mentioned AWS services within AWS Account
  2. Familiarity with **python**  programming language is recommended as the application code is written in python.
  
- **Note** *In this module, we will replace the value of variable to values identified in the previous steps so it will help if you can save the identified values to some TextEditor. Also, It is recommended to use TextEditor to update the command with replaced values before running the code.*
+ **Note** In this module, we will replace the value of variable to values identified in the previous steps so it will help if you save the identified values to some TextEditor
  
  ## Architecture Diagram
  ![Architecture](images/Lambda-Layer.png)
@@ -464,7 +471,5 @@ aws s3 rb s3://<unique-s3-bucket-name> --force
 
 
 ## Resources
-
-Tokenization vs Encryption - Tokenization is an alternative to encryption that helps to protect certain parts of the data that has high sensitivity or a specific regulatory compliance requirement such as PCI. Separating the sensitive data into its own dedicated, secured data store and using tokens in its place helps you avoid the potential cost and complexity of end-to-end encryption. It also allows you to reduce risk with temporary, one-time-use tokens. [More Info](https://aws.amazon.com/blogs/database/best-practices-for-securing-sensitive-data-in-aws-data-stores/)
 
 See the [AWS SAM developer guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) for an introduction to SAM specification, the SAM CLI, and serverless application concepts.
