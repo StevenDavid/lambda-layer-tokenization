@@ -27,6 +27,10 @@ Configure and Use Default Settings for Cloud9 Environment and Click on **Next St
 
 ![Default Settings](../images/cloud9-config.png)
 
+Click on **Create Environment** button 
+
+![CreateEnv](../images/cloud9-env.png)
+
 
 **Step 5.**
 
