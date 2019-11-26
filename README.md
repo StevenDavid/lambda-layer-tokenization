@@ -383,6 +383,12 @@ curl -X POST \
 }'
 ```
 
+The output will look like 
+
+```json
+{"message": "Order Created Successfully", "CreditCardToken": "*************"}
+````
+
 **Step 6.13** Let's call */paybill* API to pay the bill using the previously provided information. Replace the value of `PaymentMethodApiURL` (Step 6.5) and `IdToken` (Step 6.11) with the values identified in the previous steps. 
 
 ```bash
@@ -394,6 +400,12 @@ curl -X POST \
 "CustomerOrder": "123456789"
 }'
 ```
+
+The output will look like 
+
+```json
+{"message": "Payment Submitted Successfully", "CreditCard Charged": "0000-0000-0000-0000"}
+````
 
 Application has created the customer order with required details and saved the plain text information (generated credit card token) in DynamoDB table called `CustomerOrdeTable` and encrypted `CreditCard` information is stored in another DynamoDB table called `CreditCardTokenizerTable`. Now, check the values in both the tables to see what items are stored. 
 
