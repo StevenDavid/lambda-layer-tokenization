@@ -33,7 +33,7 @@ This repository has the following directories:
  1. Access to the above mentioned AWS services within AWS Account
  2. Familiarity with **python**  programming language is recommended as the application code is written in python.
  
- **Note** - In this module, we will replace the value of variable to values identified in the previous steps so it will help if you save the identified values to some TextEditor
+ **Note** - It is recommended to save the output values from the steps to some TextEditor for use in later steps.
  
  ## Architecture Diagram
  ![Architecture](images/Lambda-Layer.png)
