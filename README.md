@@ -51,8 +51,8 @@ This module uses AWS Cloud9 as Integrated Development Environment (IDE) for writ
  ```
  The output will look like 
  
- ```diff
- make_bucket: <unique-s3-bucket-name>
+ ```python
+make_bucket: <unique-s3-bucket-name>
  ```
  
  ## Step 3: Initialize and Clone Git into Cloud9 Environment
@@ -82,10 +82,8 @@ cd lambda-layer-tokenization/src/encryption_keys
 sam build --use-container
 ```
  
-After the build is successful, the output will look like
-
-```diff
- Build Succeeded
+```bash
+Build Succeeded
 ```
  
 **Step 4.3** Package the code and push to S3 Bucket. Replace `unique-s3-bucket-name` with the value identified in Step 2
@@ -96,7 +94,7 @@ sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.
  
 Once done, the output will look like
 
-```diff
+```bash
 Successfully packaged artifacts and wrote output template to file packaged.yaml
 ```
 
@@ -106,7 +104,7 @@ Successfully packaged artifacts and wrote output template to file packaged.yaml
 
 Once done, the output will look like
 
-```diff
+```bash
 Successfully created/updated stack - kms-stack
 ```
 
