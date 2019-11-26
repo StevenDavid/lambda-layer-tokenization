@@ -26,6 +26,8 @@ This repository has the following directories:
  2. This module assumes that you have logged in as root user into AWS account. If not, then we need to update `key policy` under [template.yaml](src/encryption_keys/template.yaml) file under encryption_keys folder. Replace `root` with your user in this file.
  3. Familiarity with **python**  programming language is recommended as the application code is written in python.
  
+ **Note** *In this module, we will replace the value of variable to values identified in the previous steps so it will help if you can save the identified values to some TextEditor. Also, It is recommended to use TextEditor to update the command with replaced values before running the code.*
+ 
  ## Architecture Diagram
  ![Architecture](images/Lambda-Layer.png)
  
