@@ -33,7 +33,7 @@ This repository has the following directories:
  1. Access to the above mentioned AWS services within AWS Account
  2. Familiarity with **python**  programming language is recommended as the application code is written in python.
  
- **Note** In this module, we will replace the value of variable to values identified in the previous steps so it will help if you save the identified values to some TextEditor
+ **Note** - In this module, we will replace the value of variable to values identified in the previous steps so it will help if you save the identified values to some TextEditor
  
  ## Architecture Diagram
  ![Architecture](images/Lambda-Layer.png)
@@ -42,10 +42,17 @@ This repository has the following directories:
 This module uses AWS Cloud9 as Integrated Development Environment (IDE) for writing, running and debugging code on the cloud. Complete the Cloud9 Setup in AWS using this [guide](cloud9_setup/README.md)
  
  ## Step 2: Create S3 Bucket
- We need [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/Welcome.html) bucket for [AWS Serverless Application Model(SAM)] (https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html). We are going to use AWS SAM, an open source framework for building serverless applications on AWS, to build and deploy SAM templates (template.yaml). **Note** that we need to use a unique name for S3 bucket. Replace `unique-s3-bucket-name` with a unique value in the following code to create S3 bucket.
+ We need [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/Welcome.html) bucket for [AWS Serverless Application Model(SAM)] (https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html). We are going to use AWS SAM, an open source framework for building serverless applications on AWS, to build and deploy SAM templates (template.yaml). Replace `unique-s3-bucket-name` with a unique value in the following code to create S3 bucket.
+ 
+ **Note** S3 Bucket names are globally unique across all AWS customers, so *make sure you specify a unique bucket name*. Don’t worry if the name is already taken, the command will fail and you can just retry with a different name.
  
  ```bash
  aws s3 mb s3://<unique-s3-bucket-name>
+ ```
+ The output will look like 
+ 
+ ```diff
+ make_bucket: <unique-s3-bucket-name>
  ```
  
  ## Step 3: Initialize and Clone Git into Cloud9 Environment
