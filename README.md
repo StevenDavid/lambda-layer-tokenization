@@ -82,9 +82,8 @@ cd lambda-layer-tokenization/src/encryption_keys
 sam build --use-container
 ```
  
-```bash
-Build Succeeded
-```
+The output will look like 
+![build-success](images/build-success.png)
  
 **Step 4.3** Package the code and push to S3 Bucket. Replace `unique-s3-bucket-name` with the value identified in Step 2
 
@@ -182,9 +181,7 @@ sam build --use-container
 
 After the build is successful, the output will look like 
 
-```diff
- Build Succeeded
-```
+![build-success](images/build-success.png)
 
 **Step 5.7** Package the code and push to S3 Bucket. Replace `unique-s3-bucket-name` with the value identified in Step 2
 
@@ -251,9 +248,8 @@ sam build --use-container
 
 After the build is successful, the output will look like 
 
-```diff
- Build Succeeded
-```
+![build-success](images/build-success.png)
+
 
 **Step 6.3** Package the code and push to S3 Bucket. Replace `unique-s3-bucket-name` with the value identified in Step 2
 
