@@ -88,7 +88,7 @@ After the build is successful, the output will look like
  Build Succeeded
 ```
  
-**Step 4.3** Package the code and push to S3 Bucket
+**Step 4.3** Package the code and push to S3 Bucket. Replace `unique-s3-bucket-name` with the value identified in Step 2
 
 ```bash
 sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml
@@ -100,7 +100,7 @@ Once done, the output will look like
 Successfully packaged artifacts and wrote output template to file packaged.yaml
 ```
 
-**Step 4.4** Pckaged.yaml ,just created in above step, will be used to deploy the code and resources to AWS. The following code will create a cloud formation stack which will configure all AWS resources required by the template. Note the name of the stack is `kms-stack`
+**Step 4.4** Packaged.yaml (created in the above step) will be used to deploy the code and resources to AWS. Wait for the stack creation to complete. Note the name of the stack is `kms-stack`
 
 `sam deploy --template-file ./packaged.yaml --stack-name kms-stack`
 
@@ -164,7 +164,9 @@ cryptography
 ./get_layer_packages.sh
 ```
 
-**Step 5.5** Copy the python files `ddb_encrypt_item.py` and `hash_gen.py` to *dynamodb-client/python/* , which are required for Lambda layer which expects files to be in a specific directory to be used by Lambda function. [More details on this](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path)
+**Step 5.5** Copy the python files `ddb_encrypt_item.py` and `hash_gen.py` to *dynamodb-client/python/*. This is required since Lambda Layer expects files to be in a specific directory to be used by Lambda function. [More details on this](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path)
+`ddb_encrypt_item.py` – This file contains the logic to encrypt and decrypt the plain text and store encrypted information in DynamoDB table.
+`hash_gen.py` - This file contains the logic to create UUID tokens for strings which will be provided to the end application in exchange for sensitive data, for example, credit card. 
 
 ```bash
 cp ddb_encrypt_item.py dynamodb-client/python/
@@ -186,7 +188,7 @@ After the build is successful, the output will look like
  Build Succeeded
 ```
 
-**Step 5.7** Package the code and push to S3 Bucket
+**Step 5.7** Package the code and push to S3 Bucket. Replace `unique-s3-bucket-name` with the value identified in Step 2
 
 ```bash
 sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml
@@ -198,7 +200,7 @@ The output will look like
 Successfully packaged artifacts and wrote output template to file packaged.yaml
 ```
 
-**Step 5.8** Similar to Step 4.4, deploy code and resources to AWS using the packaged.yaml just created with the following code. Note the name of the stack is `tokenizer-stack`
+**Step 5.8** Similar to Step 4.4, create cloud formation stack using the below code to create resources and deploy your code. Wait for the stack creation to complete. Note the name of the stack is `tokenizer-stack`
 
 ```bash
 sam deploy --template-file ./packaged.yaml --stack-name tokenizer-stack
@@ -255,7 +257,7 @@ After the build is successful, the output will look like
  Build Succeeded
 ```
 
-**Step 6.3** Package the code and push to S3 Bucket
+**Step 6.3** Package the code and push to S3 Bucket. Replace `unique-s3-bucket-name` with the value identified in Step 2
 
 ```bash
 sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml
@@ -267,7 +269,7 @@ The output will look like
 
 **Step 6.4** Similar to Step 4.4, deploy code and resources to AWS using the packaged.yaml just created with the following code. Note the name of the stack is `app-stack`. 
 
-Replace the parameters with previously noted values for `KMSKeyID` (Step 4.5), `LayerVersionArn` (Step 5.9) and `DynamoDBArn` (Step 5.9)
+Replace the parameters after `--parameter-overrides ` with previously noted values for `LayerVersionArn` (Step 5.9), `KMSKeyID` (Step 4.5)  and `DynamoDBArn` (Step 5.9)
 
 ```bash
 sam deploy --template-file ./packaged.yaml --stack-name app-stack --capabilities CAPABILITY_IAM --parameter-overrides layerarn=<LayerVersionArn> kmsid=<KMSKeyID> dynamodbarn=<DynamoDBArn>
