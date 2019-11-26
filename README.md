@@ -262,13 +262,14 @@ sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.
 The output will look like 
 ![package-success](images/sam-package.png)
 
-**Step 6.4** Similar to Step 4.4, deploy code and resources to AWS using the packaged.yaml just created with the following code. Note the name of the stack is `app-stack`. 
+**Step 6.4** Similar to Step 4.4, deploy code and resources to AWS using the packaged.yaml. Note the name of the stack is `app-stack`. 
 
-Replace the parameters after `--parameter-overrides ` with previously noted values for `LayerVersionArn` (Step 5.9), `KMSKeyID` (Step 4.5)  and `DynamoDBArn` (Step 5.9)
+Replace the parameters with previously noted values for `LayerVersionArn` (Step 5.9), `KMSKeyID` (Step 4.5)  and `DynamoDBArn` (Step 5.9)
 
 ```bash
 sam deploy --template-file ./packaged.yaml --stack-name app-stack --capabilities CAPABILITY_IAM --parameter-overrides layerarn=<LayerVersionArn> kmsid=<KMSKeyID> dynamodbarn=<DynamoDBArn>
 ```
+![app-stack](images/app-stack.png)
 
 **Step 6.5** Get the output variables of the stack
 
@@ -308,7 +309,7 @@ The output will look like
 
             ]
 ```
-Note the *OutputValue* of *OutputKey* `PaymentMethodApiURL` , `AccountId` , `UserPoolAppClientId` and `Region` from the output.
+Note the *OutputValue* of *OutputKey* `PaymentMethodApiURL` , `AccountId` , `UserPoolAppClientId` and `Region` from the output for later steps.
 
 
 **Step 6.6** Create a Cognito user with the following code. Replace `Region` and `UserPoolAppClientId` with values noted in  the previous step. Also, provide a **valid** email in place of `user-email` and `password`. Note: you should have access to the email provided to get the verification code. The password should be minimum 6 characters long, should contain at least one lower case and one upper case character.  
