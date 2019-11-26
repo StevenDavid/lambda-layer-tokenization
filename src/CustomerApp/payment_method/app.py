@@ -28,7 +28,7 @@ def lambda_handler(event, context):
                    Item={
                     'CustomerOrder': body.get('CustomerOrder'),
                     'CustomerName': body.get('CustomerName'),
-                    'CreditCard' : str(credit_card_token),
+                    'CreditCardToken' : str(credit_card_token),
                     'Address' : body.get('Address')
                         })
         print (response)
@@ -67,7 +67,7 @@ def lambda_handler(event, context):
                 item = responseddb['Item']
                 print(item)
                 index_key = {}
-                index_key['Hash_Key'] = item['CreditCard']
+                index_key['Hash_Key'] = item['CreditCardToken']
                 index_key['Account_Id'] = ACCOUNT_ID
                 response2 = ddb_encrypt_item.get_decrypted_item(index_key,table_name)
                 ### Add your code to invoke bill payment API
