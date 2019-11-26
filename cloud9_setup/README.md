@@ -35,6 +35,6 @@ It will take couple of minutes to create the environment, Below screen appears o
 ![Created](../images/cloud9-screen.png)
 
 
-You have created Cloud9 Environment. Go back to [PreviousPage] (../README.md)
+You have created Cloud9 Environment. Go back to [PreviousPage](../README.md)
 
 
