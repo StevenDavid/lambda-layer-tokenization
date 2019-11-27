@@ -101,7 +101,6 @@ The output will look like
 
 Once done, the output will look like
 
-The output will look like 
 ![deploy-success](images/kms-stack.png)
 
 **Step 4.5** Get the output variables of the stack 
