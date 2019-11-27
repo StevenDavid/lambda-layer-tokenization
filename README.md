@@ -159,7 +159,7 @@ cryptography
 ```
 
 The output will look like 
-![layer-installed](images/layer-installed.png)
+![layer-installed](images/get-lambda-layer-output.png)
 
 **Step 5.5** Copy the python files `ddb_encrypt_item.py` and `hash_gen.py` to *dynamodb-client/python/*. This is required since Lambda Layer expects files to be in a specific directory to be used by Lambda function. [More details on this](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path)
 
