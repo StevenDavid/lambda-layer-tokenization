@@ -421,11 +421,11 @@ The output will look like
 
 Note the value of `CandidateString`. It will be the encrypted value of `CreditCard` instead of the plain text. 
 
-Here, in step 6, cloud formation stack created DynamoDB table for storing customer order information, Lambda function for handling request and response, APIs for creating order and paying bill and Cognito user pool for API authentication. In order to verify application functionality, we created a Cognito user to call the APIs and validated plain text (generated token) in `CustomerOrderTable` and encrypted credit card information in `CreditCardTokenizerTable` DynamoDB tables.  
+Here, in this step, cloud formation stack created DynamoDB table for storing customer order information, Lambda function for handling request and response, imported Lambda Layer created in the earlier step, APIs for creating order and paying bill and Cognito user pool for API authentication. In order to verify application functionality, we created a Cognito user to call the APIs and validated plain text (generated token) in `CustomerOrderTable` and encrypted credit card information in `CreditCardTokenizerTable` DynamoDB tables.  
 
 ## Step 4: Clean up and delete the resources
 
-Delete the two cloud formation stacks created (Steps 2 and 3) and S3 bucket.
+Delete the two cloud formation stacks created (Steps 2 and 3).
 
 ```bash
 aws cloudformation delete-stack --stack-name app-stack
