@@ -56,6 +56,24 @@ The output will look like
 export kms_alias=`aws kms list-aliases | grep 'mod-' | grep "AliasName" | cut -d'/' -f2 | cut -d'"' -f1`
 aws kms describe-key --key-id alias/$kms_alias
 ```
+The output will look like 
+
+```json
+{
+    "KeyMetadata": {
+        "Origin": "AWS_KMS", 
+        "KeyId": "********************", 
+        "Description": "Customer managed key to be used for dynamo items encryption", 
+        "KeyManager": "CUSTOMER", 
+        "Enabled": true, 
+        "KeyUsage": "ENCRYPT_DECRYPT", 
+        "KeyState": "Enabled", 
+        "CreationDate": 1574833193.111, 
+        "Arn": "arn:aws:kms:*****************", 
+        "AWSAccountId": "************"
+    }
+}
+```
 
 ## Step 2: Create Lambda Layer for String Tokenization and Encrypted Data Store
 
