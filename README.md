@@ -287,7 +287,7 @@ The output will look like
                     "OutputValue": "*******************:app-stack-CustomerOrderFunction*******"
                 }, 
                 {
-                    "Description": "API Gateway endpoint URL for Prod stage for Hello World function", 
+                    "Description": "API Gateway endpoint URL for CustomerOrderFunction", 
                     "OutputKey": "PaymentMethodApiURL", 
                     "OutputValue": "https://*****************/dev/"
                 }, 
