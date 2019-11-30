@@ -190,7 +190,7 @@ Outputs:
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   PaymentMethodApiURL:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Description: "API Gateway endpoint URL for CustomerOrderFunction"
     Value: !Sub "https://${PaymentMethodApi}.execute-api.${AWS::Region}.amazonaws.com/${stage}"
   CustomerOrderFunction:
     Description: "Customer Order Lambda Function ARN"
