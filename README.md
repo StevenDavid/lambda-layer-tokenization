@@ -133,9 +133,9 @@ cd /home/ec2-user/environment/lambda-layer-tokenization/src/tokenizer/
 
 **Step 5.2** Open the file `ddb_encrypt_item.py` and update the value of the variable `aws_cmk_id` with the output value of `KMSKeyID` generated in Step 4.5 above and save the file.
 
-```bash
-vi ddb_encrypt_item.py
-```
+![file-tree](images/edit-file-tree.png)
+
+![open-file](images/opened-file.png)
 
 As part of Lambda Layer creation, we need dependent libraries for the application code `ddb_encrypt_item.py` to run. Since the libraries are Operating System (OS) dependent, they have to be compiled on native OS supported by Lambda.
 
