@@ -41,7 +41,7 @@ This repository has the following directories:
  
 ## Step 1. Get the values of existing S3 Bucket and Customer Managed Key 
 
-**Step 1.1** Get S3 Bucket Name and take a note of it for later steps
+**Step 1.1** Get *S3 Bucket Name* and take a note of it for later steps
 
 ```bash
 aws s3 ls
