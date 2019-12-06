@@ -50,7 +50,7 @@ The output will look like
 
 ![s3-output](images/get-s3-name.png)
 
-**Step 1.2** Get `Arn` value from the output and take a note of it for later steps
+**Step 1.2** Get **Arn** value from the output and take a note of it for later steps
 
 ```bash
 export kms_alias=`aws kms list-aliases | grep 'mod-' | grep "AliasName" | cut -d'/' -f2 | cut -d'"' -f1`
@@ -83,7 +83,7 @@ The output will look like
 cd /home/ec2-user/environment/lambda-layer-tokenization/src/tokenizer/
 ```
 
-**Step 2.2** Open the file `ddb_encrypt_item.py` and update the value of the variable `aws_cmk_id` with the output value of `Arn` noted in Step 1.2 above and save the file. 
+**Step 2.2** Open the file **ddb_encrypt_item.py** and update the value of the variable **aws_cmk_id** with the output value of `Arn` noted in Step 1.2 above and save the file. 
 
 ![file-tree](images/edit-file-tree.png)
 
@@ -102,7 +102,7 @@ The output will look like
 ![requirements](images/requirements-output.png)
 
 
-**Step 2.4** Run the script to compile and install the dependent libraries in *dynamodb-client/python/* directory. For Lambda Function, we can include `--use container` in `sam build` command to achieve this but for Lambda Layer, we need to download the Lambda docker image to compile dependent libraries for Amazon Linux Image. [More details on this](https://github.com/pyca/cryptography/issues/3051?source=post_page-----f3e228470659----------------------)
+**Step 2.4** Run the script to compile and install the dependent libraries in *dynamodb-client/python/* directory. We need to download the Lambda docker image to compile dependent libraries for Amazon Linux Image. [More details on this](https://github.com/pyca/cryptography/issues/3051?source=post_page-----f3e228470659----------------------)
 
 ```bash
 ./get_layer_packages.sh
@@ -135,7 +135,7 @@ After the build is successful, the output will look like
 
 ![build-success](images/build-success.png)
 
-**Step 2.7** Package the code and push to S3 Bucket. Replace `unique-s3-bucket-name` with the value identified in Step 1.1
+**Step 2.7** Package the code and push to S3 Bucket. Replace **unique-s3-bucket-name** with the value identified in Step 1.1
 
 ```bash
 sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml
@@ -145,7 +145,7 @@ The output will look like
 
 ![package-success](images/tokenizer-stack-package.png)
 
-**Step 2.8** Create CloudFormation stack using the below code to create resources and deploy your code. Wait for the stack creation to complete. Note the name of the stack is `tokenizer-stack`
+**Step 2.8** Create CloudFormation stack using the below code to create resources and deploy your code. Wait for the stack creation to complete. Note the name of the stack is **tokenizer-stack**
 
 ```bash
 sam deploy --template-file ./packaged.yaml --stack-name tokenizer-stack
@@ -179,7 +179,7 @@ The output will look like
             ]
 ```
 
-Note the *OutputValue* of `LayerVersionArn` and `DynamoDBArn` from the output for later steps.
+Note the *OutputValue* of **LayerVersionArn** and **DynamoDBArn** from the output for later steps.
 
 Here, in Step 2, the CloudFormation stack created DynamoDB table to store encrypted data as well as Lamda Layer for encrypting/decrypting the sensitive data and generating unique tokens for sensitive data.
 
@@ -204,7 +204,7 @@ After the build is successful, the output will look like
 ![build-success](images/build-success.png)
 
 
-**Step 3.3** Package the code and push to S3 Bucket. Replace `unique-s3-bucket-name` with the value identified in Step 1.1
+**Step 3.3** Package the code and push to S3 Bucket. Replace **unique-s3-bucket-name** with the value identified in Step 1.1
 
 ```bash
 sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml
@@ -213,9 +213,9 @@ sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.
 The output will look like 
 ![package-success](images/sam-package.png)
 
-**Step 3.4** Create CloudFormation stack to deploy code and resources to AWS using the packaged.yaml. Note the name of the stack is `app-stack`. 
+**Step 3.4** Create CloudFormation stack to deploy code and resources to AWS using the packaged.yaml. Note the name of the stack is **app-stack**. 
 
-Replace the parameters with previously noted values for `LayerVersionArn` (Step 2.9), `Arn` (Step 1.2)  and `DynamoDBArn` (Step 2.9)
+Replace the parameters with previously noted values for **LayerVersionArn** (Step 2.9), **Arn** i.e. KMS Arn (Step 1.2)  and **DynamoDBArn** (Step 2.9)
 
 ```bash
 sam deploy --template-file ./packaged.yaml --stack-name app-stack --capabilities CAPABILITY_IAM --parameter-overrides layerarn=<LayerVersionArn> kmsid=<Arn> dynamodbarn=<DynamoDBArn>
@@ -260,10 +260,10 @@ The output will look like
 
             ]
 ```
-Note the *OutputValue* of *OutputKey* `PaymentMethodApiURL` , `AccountId` , `UserPoolAppClientId` and `Region` from the output for later steps.
+Note the *OutputValue* of *OutputKey* **PaymentMethodApiURL** , **AccountId** , **UserPoolAppClientId** and **Region** from the output for later steps.
 
 
-**Step 3.6** Create a Cognito user with the following code. Replace `Region` and `UserPoolAppClientId` with values noted in  the previous step. Also, provide a **valid** email in place of `user-email` and `password`. Note: you should have access to the email provided to get the verification code. The password should be minimum 6 characters long, should contain at least one lower case and one upper case character.  
+**Step 3.6** Create a Cognito user with the following code. Replace **Region** and **UserPoolAppClientId** with values noted in  the previous step. Also, provide a **valid** email in place of **user-email** and **password**. Note: you should have access to the email provided to get the verification code. The password should be minimum 6 characters long, should contain at least one lower case and one upper case character.  
 
 ```bash
 aws cognito-idp sign-up --region <Region> --client-id <UserPoolAppClientId> --username <user-email> --password <password>
@@ -284,7 +284,7 @@ The output will look like
 
 **Step 3.7** Lets verify the Cognito user we just created  
 
-**Note** – Replace `CONFIRMATION_CODE_IN_EMAIL` with the verification code recieved in the email provided in the previous step. 
+**Note** – Replace *CONFIRMATION_CODE_IN_EMAIL* with the verification code recieved in the email provided in the previous step. 
 
 ```bash
 aws cognito-idp confirm-sign-up --client-id <UserPoolAppClientId>  --username <user-email> --confirmation-code <CONFIRMATION_CODE_IN_EMAIL>
@@ -292,7 +292,7 @@ aws cognito-idp confirm-sign-up --client-id <UserPoolAppClientId>  --username <u
 
 **Note** – There will be no output for this command.
 
-**Step 3.8** Generate ID token for API authentication. Replace `UserPoolAppClientId` with value noted in step 3.5. Also replace `user-email` and `password` with the same values provided in step 3.6. 
+**Step 3.8** Generate ID token for API authentication. Replace **UserPoolAppClientId** with value noted in step 3.5. Also replace **user-email** and **password** with the same values provided in step 3.6. 
 
 ```bash
 aws cognito-idp initiate-auth --auth-flow USER_PASSWORD_AUTH --client-id <UserPoolAppClientId> --auth-parameters USERNAME=<user-email>,PASSWORD=<password>
@@ -316,10 +316,10 @@ Note the value of `IdToken` from the output for next steps.
 
 
 Now, we will invoke APIs to test the application. There are two APIs - 
-1. **order** - The first API i.e. *order* is to create the customer order, generate the token for credit card number (using Lambda Layer) and store encrypted credit card number in another DynamoDB table called `CreditCardTokenizerTable` (as specified in the Lambda Layer) and finally store the customer information along with the credit card token in DynamoDB table called `CustomerOrderTable`. 
-2. **paybill** - The second API i.e. *paybill* takes the `CustomerOrder` number and fetches credit card token from  `CustomerOrderTable` and calls decrypt method in Lambda Layer to get the deciphered credit card number. 
+1. **order** - The first API i.e. *order* is to create the customer order, generate the token for credit card number (using Lambda Layer) and store encrypted credit card number in another DynamoDB table called **CreditCardTokenizerTable** (as specified in the Lambda Layer) and finally store the customer information along with the credit card token in DynamoDB table called **CustomerOrderTable**. 
+2. **paybill** - The second API i.e. *paybill* takes the **CustomerOrder** number and fetches credit card token from  **CustomerOrderTable** and calls decrypt method in Lambda Layer to get the deciphered credit card number. 
 
-**Step 3.9** Let's call */order* API to create the order with the following code. Replace the value of `PaymentMethodApiURL` (Step 3.5) and `IdToken` (Step 3.8) with the values identified in the previous steps. 
+**Step 3.9** Let's call */order* API to create the order with the following code. Replace the value of **PaymentMethodApiURL** (Step 3.5) and **IdToken** (Step 3.8) with the values identified in the previous steps. 
 
 ```bash
 curl -X POST \
@@ -340,7 +340,7 @@ The output will look like
 {"message": "Order Created Successfully", "CreditCardToken": "*************"}
 ````
 
-**Step 3.10** Let's call */paybill* API to pay the bill using the previously provided information. Replace the value of `PaymentMethodApiURL` (Step 3.5) and `IdToken` (Step 3.8) with the values identified in the previous steps. 
+**Step 3.10** Let's call */paybill* API to pay the bill using the previously provided information. Replace the value of **PaymentMethodApiURL** (Step 3.5) and **IdToken** (Step 3.8) with the values identified in the previous steps. 
 
 ```bash
 curl -X POST \
@@ -360,7 +360,7 @@ The output will look like
 
 Application has created the customer order with required details and saved the plain text information (generated credit card token) in DynamoDB table called `CustomerOrdeTable` and encrypted `CreditCard` information is stored in another DynamoDB table called `CreditCardTokenizerTable`. Now, check the values in both the tables to see what items are stored. 
 
-**Step 3.11 [OPTIONAL VERIFICATION]** Get the items stored in `CustomerOrdeTable`
+**Step 3.11 [OPTIONAL VERIFICATION]** Get the items stored in **CustomerOrdeTable**
 
 ```bash
 aws dynamodb get-item --table-name CustomerOrderTable --key '{ "CustomerOrder" : { "S": "123456789" }  }'
@@ -387,9 +387,9 @@ The output will look like
 }
 ```
 
-Note the value of `CreditCardToken`. It will be the generated token value and not actual `CreditCard` provided by the end user.
+Note the value of **CreditCardToken**. It will be the generated token value and not actual **CreditCard** provided by the end user.
 
-**Step 3.12 [OPTIONAL VERIFICATION]** Get the items stored in `CreditCardTokenizerTable`. Replace the value of `CreditCardToken` (Step 3.11) and `AccountId` (Step 3.5) with previously identified values.
+**Step 3.12 [OPTIONAL VERIFICATION]** Get the items stored in **CreditCardTokenizerTable**. Replace the value of **CreditCardToken** (Step 3.11) and **AccountId** (Step 3.5) with previously identified values.
 
 ```bash
 aws dynamodb get-item --table-name CreditCardTokenizerTable --key '{ "Hash_Key" : { "S": "<CreditCardToken>" }, "Account_Id" : { "S" : "<AccountId>" }  }'
@@ -419,7 +419,7 @@ The output will look like
 
 ```
 
-Note the value of `CandidateString`. It will be the encrypted value of `CreditCard` instead of the plain text. 
+Note the value of **CandidateString**. It will be the encrypted value of **CreditCard** instead of the plain text. 
 
 Here, in this step, CloudFormation stack created DynamoDB table for storing customer order information, Lambda function for handling request and response, imported Lambda Layer created in the earlier step, APIs for creating order and paying bill and Cognito user pool for API authentication. In order to verify application functionality, we created a Cognito user to call the APIs and validated plain text (generated token) in `CustomerOrderTable` and encrypted credit card information in `CreditCardTokenizerTable` DynamoDB tables.  
 
