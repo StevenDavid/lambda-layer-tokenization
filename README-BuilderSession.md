@@ -360,7 +360,7 @@ The output will look like
 
 Application has created the customer order with required details and saved the plain text information (generated credit card token) in DynamoDB table called `CustomerOrdeTable` and encrypted `CreditCard` information is stored in another DynamoDB table called `CreditCardTokenizerTable`. Now, check the values in both the tables to see what items are stored. 
 
-**Step 3.11** Get the items stored in `CustomerOrdeTable`
+**Step 3.11 [OPTIONAL VERIFICATION]** Get the items stored in `CustomerOrdeTable`
 
 ```bash
 aws dynamodb get-item --table-name CustomerOrderTable --key '{ "CustomerOrder" : { "S": "123456789" }  }'
@@ -389,7 +389,7 @@ The output will look like
 
 Note the value of `CreditCardToken`. It will be the generated token value and not actual `CreditCard` provided by the end user.
 
-**Step 3.12** Get the items stored in `CreditCardTokenizerTable`. Replace the value of `CreditCardToken` (Step 3.11) and `AccountId` (Step 3.5) with previously identified values.
+**Step 3.12 [OPTIONAL VERIFICATION]** Get the items stored in `CreditCardTokenizerTable`. Replace the value of `CreditCardToken` (Step 3.11) and `AccountId` (Step 3.5) with previously identified values.
 
 ```bash
 aws dynamodb get-item --table-name CreditCardTokenizerTable --key '{ "Hash_Key" : { "S": "<CreditCardToken>" }, "Account_Id" : { "S" : "<AccountId>" }  }'
