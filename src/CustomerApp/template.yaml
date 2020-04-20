@@ -1,72 +1,204 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
-Description: 'Creating Endpoint for Payment Method'
-
-Parameters: 
-  stage: 
+AWSTemplateFormatVersion: 2010-09-09
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Creating Endpoint for Payment Method
+Parameters:
+  stage:
     Type: String
-    Default: 'dev'
+    Default: dev
   layerarn:
     Type: String
-    Default: 'default'
+    Default: default
   kmsid:
     Type: String
-    Default: 'default'
+    Default: default
   dynamodbarn:
     Type: String
-    Default: 'default'
+    Default: default
   encryptTableName:
     Type: String
-    Default: 'CreditCardTokenizerTable'
+    Default: CreditCardTokenizerTable
   customerTableName:
     Type: String
-    Default: 'CustomerOrderTable'
-
+    Default: CustomerOrderTable
 Globals:
   Function:
     Timeout: 10
     Environment:
       Variables:
-        EncryptionTableName: !Sub ${encryptTableName}
-        CustomerOrderTableName: !Sub ${customerTableName}
-
+        EncryptionTableName: !Sub '${encryptTableName}'
+        CustomerOrderTableName: !Sub '${customerTableName}'
+        KMSKey: !Sub '${kmsid}'
 Resources:
   UserPool:
-     Type: AWS::Cognito::UserPool
-     Properties:
-        AdminCreateUserConfig:
-          AllowAdminCreateUserOnly: false
-        UserPoolName: TestingUsers
-        UsernameAttributes:
-         - email
-        AutoVerifiedAttributes:
-         - email
-        Policies:
-          PasswordPolicy:
-            MinimumLength: 6
-            RequireLowercase: true
-            RequireNumbers: false
-            RequireSymbols: false
-            RequireUppercase: true
+    Type: 'AWS::Cognito::UserPool'
+    Properties:
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      UserPoolName: TestingUsers
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 6
+          RequireLowercase: true
+          RequireNumbers: false
+          RequireSymbols: false
+          RequireUppercase: true
   UserPoolAppClient:
-     Type: AWS::Cognito::UserPoolClient
-     Properties:
-       UserPoolId: !Ref UserPool
-       GenerateSecret: false
-       ExplicitAuthFlows:
-       - USER_PASSWORD_AUTH
+    Type: 'AWS::Cognito::UserPoolClient'
+    Properties:
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - USER_PASSWORD_AUTH
+  LAMVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      InstanceTenancy: default
+      Tags:
+        - Key: 'Name'
+          Value: 'Tokenization VPC'
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+  AttachGateway:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId:
+        Ref: LAMVPC
+      InternetGatewayId:
+        Ref: InternetGateway
+  LAMPublicSubNet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      AvailabilityZone: !Select 
+        - 0
+        - 'Fn::GetAZs': !Ref 'AWS::Region'
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: True
+      VpcId: !Ref LAMVPC
+  LAMSubNet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      AvailabilityZone: !Select 
+        - 0
+        - 'Fn::GetAZs': !Ref 'AWS::Region'
+      CidrBlock: 10.0.0.0/24
+      VpcId: !Ref LAMVPC
+  MyEIP:
+    Type: 'AWS::EC2::EIP'
+    DependsOn: AttachGateway
+    Properties:
+      Domain: 'vpc'
+  PublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId:  
+        Ref: LAMVPC
+      Tags:
+      - Key: 'Name'
+        Value: 'Public RouteTable'
+  PublicSubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId:
+        Ref: LAMPublicSubNet
+      RouteTableId:
+        Ref: PublicRouteTable
+  NAT:
+   Type: 'AWS::EC2::NatGateway'
+   Properties:
+      AllocationId:
+         Fn::GetAtt:
+         - MyEIP
+         - AllocationId
+      SubnetId:
+         Ref: LAMPublicSubNet
+      Tags:
+      - Key: 'Name'
+        Value: 'Tokenization NAT'
+  DynamoDBRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId:  
+        Ref: LAMVPC
+      Tags:
+      - Key: 'Name'
+        Value: 'DynamoDB RouteTable'
+  mySubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId:
+        Ref: LAMSubNet
+      RouteTableId:
+        Ref: DynamoDBRouteTable
+  IGRoute:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+         Ref: InternetGateway
+  NATRoute:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId:
+        Ref: DynamoDBRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+         Ref: NAT
+  DynamoDBEndPoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    DependsOn: LAMVPC
+    Properties:
+      PolicyDocument: '{
+        "Version":"2012-10-17",
+        "Statement":[{
+          "Effect":"Allow",
+          "Principal": "*",
+          "Action":["dynamodb:BatchGetItem", "dynamodb:BatchWriteItem", "dynamodb:PutItem", "dynamodb:DescribeTable", "dynamodb:DescribeGlobalTable", "dynamodb:DeleteItem", "dynamodb:GetItem", "dynamodb:Query", "dynamodb:GetRecords"],
+          "Resource":["*"]
+        }]
+      }'
+      RouteTableIds:
+        - !Ref DynamoDBRouteTable
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.dynamodb
+      VpcId: !Ref LAMVPC
+  CustomerOrderSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: CustomerOrderSG
+      GroupDescription: Allow Custom orders lambda to talk to DynamoDB
+      VpcId:
+        Ref: LAMVPC
+      SecurityGroupIngress:
+      - IpProtocol: -1
+        FromPort: -1
+        ToPort: -1
+        CidrIp: 0.0.0.0/0
   CustomerOrderFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: 'AWS::Serverless::Function'
+    DependsOn: AllowLambdaInVPCPolicy
     Properties:
       CodeUri: payment_method/
       Handler: app.lambda_handler
       Runtime: python3.7
       Role: !GetAtt LambdaExecutionRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref CustomerOrderSG
+        SubnetIds:
+          - !Ref LAMSubNet
       Layers:
-       - !Sub ${layerarn}
+        - !Sub '${layerarn}'
       Events:
         SayHello:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /hello
             RestApiId: !Ref PaymentMethodApi
@@ -74,13 +206,13 @@ Resources:
             Auth:
               Authorizer: NONE
         PaymentMethod:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /order
             RestApiId: !Ref PaymentMethodApi
             Method: post
         PayBillMethod:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /paybill
             RestApiId: !Ref PaymentMethodApi
@@ -91,26 +223,26 @@ Resources:
     Properties:
       Name: PaymentMethodApi
       StageName: !Ref stage
-      EndpointConfiguration: 'REGIONAL'
+      EndpointConfiguration: REGIONAL
       Cors:
-        AllowMethods: "'*'"
-        AllowHeaders: "'*'"
-        AllowOrigin: "'*'"
+        AllowMethods: '''*'''
+        AllowHeaders: '''*'''
+        AllowOrigin: '''*'''
       Auth:
         DefaultAuthorizer: MyCognitoAuthorizer
         Authorizers:
           MyCognitoAuthorizer:
             UserPoolArn: !GetAtt UserPool.Arn
   LambdaExecutionRole:
-    Type: "AWS::IAM::Role"
+    Type: 'AWS::IAM::Role'
     Properties:
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+        Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
               Service: lambda.amazonaws.com
-            Action: "sts:AssumeRole"
+            Action: 'sts:AssumeRole'
   KMSAccessPolicy:
     DependsOn: CustomerOrderFunction
     Type: 'AWS::IAM::Policy'
@@ -120,14 +252,14 @@ Resources:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
-            Action: 
-              - "kms:Decrypt"
-              - "kms:Encrypt"
-              - "kms:GenerateDataKey"
-              - "kms:GenerateDataKeyWithoutPlaintext"
-            Resource: !Sub ${kmsid}
+            Action:
+              - 'kms:Decrypt'
+              - 'kms:Encrypt'
+              - 'kms:GenerateDataKey'
+              - 'kms:GenerateDataKeyWithoutPlaintext'
+            Resource: !Sub '${kmsid}'
       Roles:
-        - !Ref LambdaExecutionRole 
+        - !Ref LambdaExecutionRole
   DynamoDBAccessPolicy:
     DependsOn: CustomerOrderFunction
     Type: 'AWS::IAM::Policy'
@@ -137,21 +269,21 @@ Resources:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
-            Action: 
-              - "dynamodb:BatchGetItem"
-              - "dynamodb:BatchWriteItem"
-              - "dynamodb:PutItem"
-              - "dynamodb:DescribeTable"
-              - "dynamodb:DescribeGlobalTable"
-              - "dynamodb:DeleteItem"
-              - "dynamodb:GetItem"
-              - "dynamodb:Query"
-              - "dynamodb:GetRecords"
-            Resource: 
-            - !Sub ${dynamodbarn}
-            - !GetAtt OrderDatabase.Arn
+            Action:
+              - 'dynamodb:BatchGetItem'
+              - 'dynamodb:BatchWriteItem'
+              - 'dynamodb:PutItem'
+              - 'dynamodb:DescribeTable'
+              - 'dynamodb:DescribeGlobalTable'
+              - 'dynamodb:DeleteItem'
+              - 'dynamodb:GetItem'
+              - 'dynamodb:Query'
+              - 'dynamodb:GetRecords'
+            Resource:
+              - !Sub '${dynamodbarn}'
+              - !GetAtt OrderDatabase.Arn
       Roles:
-        - !Ref LambdaExecutionRole 
+        - !Ref LambdaExecutionRole
   CloudWatchLogAccessPolicy:
     DependsOn: CustomerOrderFunction
     Type: 'AWS::IAM::Policy'
@@ -161,52 +293,64 @@ Resources:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
-            Action: 
-              - "logs:CreateLogGroup"
-              - "logs:CreateLogStream"
-              - "logs:PutLogEvents"
-            Resource: "*"
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+            Resource: '*'
+      Roles:
+        - !Ref LambdaExecutionRole
+  AllowLambdaInVPCPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: AllowLambdaInVPCPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'ec2:CreateNetworkInterface'
+              - 'ec2:DescribeNetworkInterfaces'
+              - 'ec2:DeleteNetworkInterface'
+            Resource: '*'
       Roles:
         - !Ref LambdaExecutionRole
   OrderDatabase:
-    Type: AWS::DynamoDB::Table
+    Type: 'AWS::DynamoDB::Table'
     Properties:
-      TableName: !Sub ${customerTableName}
-      AttributeDefinitions: 
-        - AttributeName: "CustomerOrder"
-          AttributeType: "S"
-      KeySchema: 
-        - AttributeName: "CustomerOrder"
-          KeyType: "HASH"
+      TableName: !Sub '${customerTableName}'
+      AttributeDefinitions:
+        - AttributeName: CustomerOrder
+          AttributeType: S
+      KeySchema:
+        - AttributeName: CustomerOrder
+          KeyType: HASH
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
       SSESpecification:
-        SSEEnabled: Yes
-        SSEType: 'KMS'
-
+        SSEEnabled: True
+        SSEType: KMS
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   PaymentMethodApiURL:
-    Description: "API Gateway endpoint URL for CustomerOrderFunction"
-    Value: !Sub "https://${PaymentMethodApi}.execute-api.${AWS::Region}.amazonaws.com/${stage}"
+    Description: API Gateway endpoint URL for CustomerOrderFunction
+    Value: !Sub >-
+      https://${PaymentMethodApi}.execute-api.${AWS::Region}.amazonaws.com/${stage}
   CustomerOrderFunction:
-    Description: "Customer Order Lambda Function ARN"
+    Description: Customer Order Lambda Function ARN
     Value: !GetAtt CustomerOrderFunction.Arn
   LambdaExecutionRole:
-    Description: "Implicit IAM Role created for Hello World function"
+    Description: Implicit IAM Role created for Hello World function
     Value: !GetAtt LambdaExecutionRole.Arn
   UserPoolArn:
-    Description: "User Pool Arn for the cognito pool"
+    Description: User Pool Arn for the cognito pool
     Value: !GetAtt UserPool.Arn
   UserPoolAppClientId:
-    Description: "User Pool App Client for your application"
+    Description: User Pool App Client for your application
     Value: !Ref UserPoolAppClient
   Region:
-    Description: "Region"
-    Value: !Ref AWS::Region
+    Description: Region
+    Value: !Ref 'AWS::Region'
   AccountId:
-    Description: "AWS Account Id"
-    Value: !Ref AWS::AccountId
+    Description: AWS Account Id
+    Value: !Ref 'AWS::AccountId'
