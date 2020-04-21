@@ -1,9 +1,12 @@
 import boto3
+import os
 
 from dynamodb_encryption_sdk.encrypted.table import EncryptedTable
 from dynamodb_encryption_sdk.identifiers import CryptoAction
 from dynamodb_encryption_sdk.material_providers.aws_kms import AwsKmsCryptographicMaterialsProvider
 from dynamodb_encryption_sdk.structures import AttributeActions
+
+aws_cmk_id=os.environ['KMSKey']
 
 def encrypt_item (plaintext_item,table_name):
     #table_name='CreditCardTokenizerTable'
