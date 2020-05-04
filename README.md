@@ -27,6 +27,7 @@ This repository has the following directories:
  4. [Amazon Cognito](https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html)
  5. [AWS Cloud9](https://docs.aws.amazon.com/cloud9/latest/user-guide/welcome.html)
  6. [AWS Key Management Service](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html)
+ 7. [AWS VPC Endpoints](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html)
  
  
  ## Pre-requisites 
@@ -131,15 +132,7 @@ Here, in Step 4, the CloudFormation stack created customer managed KMS key and g
 cd /home/ec2-user/environment/lambda-layer-tokenization/src/tokenizer/
 ```
 
-**Step 5.2** Open the file `ddb_encrypt_item.py` and update the value of the variable `aws_cmk_id` with the output value of `KMSKeyID` generated in Step 4.5 above and save the file.
-
-![file-tree](images/edit-file-tree.png)
-
-![open-file](images/opened-file.png)
-
-As part of Lambda Layer creation, we need dependent libraries for the application code `ddb_encrypt_item.py` to run. Since the libraries are Operating System (OS) dependent, they have to be compiled on native OS supported by Lambda.
-
-**Step 5.3** Check the dependent libraries mentioned in `requirements.txt` file
+**Step 5.2** Check the dependent libraries mentioned in `requirements.txt` file
 
 ```bash
 cat requirements.txt 
@@ -151,7 +144,7 @@ dynamodb-encryption-sdk
 cryptography
 ```
 
-**Step 5.4** Run the script to compile and install the dependent libraries in *dynamodb-client/python/* directory. For Lambda Function, we can include `--use container` in `sam build` command to achieve this but for Lambda Layer, we need to download the Lambda docker image to compile dependent libraries for Amazon Linux Image. [More details on this](https://github.com/pyca/cryptography/issues/3051?source=post_page-----f3e228470659----------------------)
+**Step 5.3** Run the script to compile and install the dependent libraries in *dynamodb-client/python/* directory. For Lambda Function, we can include `--use container` in `sam build` command to achieve this but for Lambda Layer, we need to download the Lambda docker image to compile dependent libraries for Amazon Linux Image. [More details on this](https://github.com/pyca/cryptography/issues/3051?source=post_page-----f3e228470659----------------------)
 
 ```bash
 ./get_layer_packages.sh
@@ -160,21 +153,7 @@ cryptography
 The output will look like 
 ![layer-installed](images/get-lambda-layer-output.png)
 
-**Step 5.5** Copy the python files `ddb_encrypt_item.py` and `hash_gen.py` to *dynamodb-client/python/*. This is required since Lambda Layer expects files to be in a specific directory to be used by Lambda function. [More details on this](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path)
-
-`ddb_encrypt_item.py` – This file contains the logic to encrypt and decrypt the plain text and store encrypted information in DynamoDB table.
-
-`hash_gen.py` - This file contains the logic to create UUID tokens for strings which will be provided to the end application in exchange for sensitive data, for example, credit card. 
-
-```bash
-cp ddb_encrypt_item.py dynamodb-client/python/
-```
-
-```bash
-cp hash_gen.py dynamodb-client/python/
-```
-
-**Step 5.6** Build the SAM template (template.yaml)
+**Step 5.4** Build the SAM template (template.yaml)
 
 ```bash
 sam build --use-container 
@@ -184,7 +163,7 @@ After the build is successful, the output will look like
 
 ![build-success](images/build-success.png)
 
-**Step 5.7** Package the code and push to S3 Bucket. Replace `unique-s3-bucket-name` with the value identified in Step 2
+**Step 5.5** Package the code and push to S3 Bucket. Replace `unique-s3-bucket-name` with the value identified in Step 2
 
 ```bash
 sam package --s3-bucket <unique-s3-bucket-name> --output-template-file packaged.yaml
@@ -194,7 +173,7 @@ The output will look like
 
 ![package-success](images/tokenizer-stack-package.png)
 
-**Step 5.8** Similar to Step 4.4, create CloudFormation stack using the below code to create resources and deploy your code. Wait for the stack creation to complete. Note the name of the stack is `tokenizer-stack`
+**Step 5.6** Similar to Step 4.4, create CloudFormation stack using the below code to create resources and deploy your code. Wait for the stack creation to complete. Note the name of the stack is `tokenizer-stack`
 
 ```bash
 sam deploy --template-file ./packaged.yaml --stack-name tokenizer-stack
@@ -203,7 +182,7 @@ sam deploy --template-file ./packaged.yaml --stack-name tokenizer-stack
 The output will look like 
 ![tokenizer-stack](images/tokenizer-stack.png)
 
-**Step 5.9** Get the output variables of the stack
+**Step 5.7** Get the output variables of the stack
 
 ```bash
 aws cloudformation describe-stacks --stack-name tokenizer-stack
@@ -281,33 +260,42 @@ The output will look like
 
 ```json
 "Outputs": [
-                {
-                    "Description": "Customer Order Lambda Function ARN", 
-                    "OutputKey": "CustomerOrderFunction", 
-                    "OutputValue": "*******************:app-stack-CustomerOrderFunction*******"
-                }, 
-                {
-                    "Description": "API Gateway endpoint URL for CustomerOrderFunction", 
-                    "OutputKey": "PaymentMethodApiURL", 
-                    "OutputValue": "https://*****************/dev/"
-                }, 
-                {
-                    "Description": "AWS Account Id", 
-                    "OutputKey": "AccountId", 
-                    "OutputValue": "********"
-                },
-                {
-                    "Description": "User Pool App Client for wer application", 
-                    "OutputKey": "UserPoolAppClientId", 
-                    "OutputValue": "********************"
-                }, 
-                {
-                    "Description": "Region", 
-                    "OutputKey": "Region", 
-                    "OutputValue": "*************"
-                }
-
-            ]
+    {
+        "Description": "Customer Order Lambda Function ARN", 
+        "OutputKey": "CustomerOrderFunction", 
+        "OutputValue": "*******************:app-stack-CustomerOrderFunction*******"
+    }, 
+    {
+        "Description": "API Gateway endpoint URL for CustomerOrderFunction", 
+        "OutputKey": "PaymentMethodApiURL", 
+        "OutputValue": "https://*****************/dev/"
+    }, 
+    {
+        "Description": "AWS Account Id", 
+        "OutputKey": "AccountId", 
+        "OutputValue": "********"
+    }, 
+    {
+        "Description": "User Pool App Client for your application", 
+        "OutputKey": "UserPoolAppClientId", 
+        "OutputValue": "********************"
+    }, 
+    {
+        "Description": "Region", 
+        "OutputKey": "Region", 
+        "OutputValue": "*************"
+    }, 
+    {
+        "Description": "User Pool Arn for the cognito pool", 
+        "OutputKey": "UserPoolArn", 
+        "OutputValue": "arn:aws:cognito-idp:**:**:userpool/********"
+    }, 
+    {
+        "Description": "Implicit IAM Role created for Hello World function", 
+        "OutputKey": "LambdaExecutionRole", 
+        "OutputValue": "******app-stack-LambdaExecutionRole-****"
+    }
+]
 ```
 Note the *OutputValue* of *OutputKey* `PaymentMethodApiURL` , `AccountId` , `UserPoolAppClientId` and `Region` from the output for later steps.
 
