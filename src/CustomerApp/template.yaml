@@ -63,24 +63,6 @@ Resources:
       Tags:
         - Key: 'Name'
           Value: 'Tokenization VPC'
-  InternetGateway:
-    Type: 'AWS::EC2::InternetGateway'
-  AttachGateway:
-    Type: 'AWS::EC2::VPCGatewayAttachment'
-    Properties:
-      VpcId:
-        Ref: LAMVPC
-      InternetGatewayId:
-        Ref: InternetGateway
-  LAMPublicSubNet:
-    Type: 'AWS::EC2::Subnet'
-    Properties:
-      AvailabilityZone: !Select 
-        - 0
-        - 'Fn::GetAZs': !Ref 'AWS::Region'
-      CidrBlock: 10.0.1.0/24
-      MapPublicIpOnLaunch: True
-      VpcId: !Ref LAMVPC
   LAMSubNet:
     Type: 'AWS::EC2::Subnet'
     Properties:
@@ -89,38 +71,6 @@ Resources:
         - 'Fn::GetAZs': !Ref 'AWS::Region'
       CidrBlock: 10.0.0.0/24
       VpcId: !Ref LAMVPC
-  MyEIP:
-    Type: 'AWS::EC2::EIP'
-    DependsOn: AttachGateway
-    Properties:
-      Domain: 'vpc'
-  PublicRouteTable:
-    Type: 'AWS::EC2::RouteTable'
-    Properties:
-      VpcId:  
-        Ref: LAMVPC
-      Tags:
-      - Key: 'Name'
-        Value: 'Public RouteTable'
-  PublicSubnetRouteTableAssociation:
-    Type: 'AWS::EC2::SubnetRouteTableAssociation'
-    Properties:
-      SubnetId:
-        Ref: LAMPublicSubNet
-      RouteTableId:
-        Ref: PublicRouteTable
-  NAT:
-   Type: 'AWS::EC2::NatGateway'
-   Properties:
-      AllocationId:
-         Fn::GetAtt:
-         - MyEIP
-         - AllocationId
-      SubnetId:
-         Ref: LAMPublicSubNet
-      Tags:
-      - Key: 'Name'
-        Value: 'Tokenization NAT'
   DynamoDBRouteTable:
     Type: 'AWS::EC2::RouteTable'
     Properties:
@@ -136,22 +86,6 @@ Resources:
         Ref: LAMSubNet
       RouteTableId:
         Ref: DynamoDBRouteTable
-  IGRoute:
-    Type: 'AWS::EC2::Route'
-    Properties:
-      RouteTableId:
-        Ref: PublicRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId:
-         Ref: InternetGateway
-  NATRoute:
-    Type: 'AWS::EC2::Route'
-    Properties:
-      RouteTableId:
-        Ref: DynamoDBRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId:
-         Ref: NAT
   DynamoDBEndPoint:
     Type: 'AWS::EC2::VPCEndpoint'
     DependsOn: LAMVPC
@@ -181,6 +115,18 @@ Resources:
         FromPort: -1
         ToPort: -1
         CidrIp: 0.0.0.0/0
+  KMSEndPoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    DependsOn: LAMVPC
+    Properties:
+      PrivateDnsEnabled: True
+      VpcEndpointType: 'Interface'
+      SecurityGroupIds: 
+        - !Ref CustomerOrderSG
+      SubnetIds:
+        - !Ref LAMSubNet
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.kms
+      VpcId: !Ref LAMVPC
   CustomerOrderFunction:
     Type: 'AWS::Serverless::Function'
     DependsOn: AllowLambdaInVPCPolicy
