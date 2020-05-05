@@ -328,7 +328,7 @@ POLICY=$(cat << EOF
 }
 EOF
 ); \
-aws kms put-key-policy --key-id arn:aws:kms:us-east-1:017073335123:key/d2cc820d-08f4-4284-84ab-d655abb53cb5 --policy-name default --policy "$POLICY"
+aws kms put-key-policy --key-id "$KEYID" --policy-name default --policy "$POLICY"
 ```
 
 
