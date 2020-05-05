@@ -17,4 +17,3 @@ Region=
 IdToken=
 
 CreditCardToken=
-

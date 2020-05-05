@@ -297,10 +297,42 @@ The output will look like
     }
 ]
 ```
-Note the *OutputValue* of *OutputKey* `PaymentMethodApiURL` , `AccountId` , `UserPoolAppClientId` and `Region` from the output for later steps.
+Note the *OutputValue* of *OutputKey* `LambdaExecutionRole`, `PaymentMethodApiURL` , `AccountId` , `UserPoolAppClientId` and `Region` from the output for later steps.
+
+**Step 6.6** Update KMS permissions to limit what our lambda is able to do with KMS. This will ensure we are adhering to least privilege principles. You will need the `LambdaExecutionRole` and `AccountId` from step 6.5, the KMS ARN from step 4.5. Replace the key values below and run the following command:
+
+```bash
+KEYID="your kms ARN"
+ROOTPrincipal="arn:aws:iam::{your account number}:root"
+LambdaExecutionRole="your LambdaExecutionRole ARN"
+POLICY=$(cat << EOF
+{ 
+    "Version": "2012-10-17", 
+    "Id": "key-default-1", 
+    "Statement": [ 
+        { 
+            "Sid": "Enable IAM User Permissions", 
+            "Effect": "Allow", 
+            "Principal": {"AWS": ["$ROOTPrincipal"]}, 
+            "Action": "kms:*", 
+            "Resource": "$KEYID" 
+        }, 
+        { 
+            "Sid": "Enable IAM User Permissions", 
+            "Effect": "Allow", 
+            "Principal": {"AWS": ["$LambdaExecutionRole"]}, 
+            "Action": ["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey", "kms:GenerateDataKeyWithoutPlaintext"], 
+            "Resource": "$KEYID" 
+        } 
+    ] 
+}
+EOF
+); \
+aws kms put-key-policy --key-id arn:aws:kms:us-east-1:017073335123:key/d2cc820d-08f4-4284-84ab-d655abb53cb5 --policy-name default --policy "$POLICY"
+```
 
 
-**Step 6.6** Create a Cognito user with the following code. Replace `Region` and `UserPoolAppClientId` with values noted in  the previous step. Also, provide a **valid** email in place of `user-email` and `password`. Note: you should have access to the email provided to get the verification code. The password should be minimum 6 characters long, should contain at least one lower case and one upper case character.  
+**Step 6.7** Create a Cognito user with the following code. Replace `Region` and `UserPoolAppClientId` with values noted in  the previous step. Also, provide a **valid** email in place of `user-email` and `password`. Note: you should have access to the email provided to get the verification code. The password should be minimum 6 characters long, should contain at least one lower case and one upper case character.  
 
 ```bash
 aws cognito-idp sign-up --region <Region> --client-id <UserPoolAppClientId> --username <user-email> --password <password>
@@ -319,7 +351,7 @@ The output will look like
 }
 ```
 
-**Step 6.7** Lets verify the Cognito user we just created  
+**Step 6.8** Lets verify the Cognito user we just created  
 
 **Note** – Replace `CONFIRMATION_CODE_IN_EMAIL` with the verification code recieved in the email provided in the previous step. 
 
@@ -329,7 +361,7 @@ aws cognito-idp confirm-sign-up --client-id <UserPoolAppClientId>  --username <u
 
 **Note** – There will be no output for this command.
 
-**Step 6.8** Generate ID token for API authentication. Replace `UserPoolAppClientId` with value noted in step 6.5. Also replace `user-email` and `password` with the same values provided in step 6.6. 
+**Step 6.9** Generate ID token for API authentication. Replace `UserPoolAppClientId` with value noted in step 6.5. Also replace `user-email` and `password` with the same values provided in step 6.6. 
 
 ```bash
 aws cognito-idp initiate-auth --auth-flow USER_PASSWORD_AUTH --client-id <UserPoolAppClientId> --auth-parameters USERNAME=<user-email>,PASSWORD=<password>
@@ -356,7 +388,7 @@ Now, we will invoke APIs to test the application. There are two APIs -
 1. **order** - The first API i.e. *order* is to create the customer order, generate the token for credit card number (using Lambda Layer) and store encrypted credit card number in another DynamoDB table called `CreditCardTokenizerTable` (as specified in the Lambda Layer) and finally store the customer information along with the credit card token in DynamoDB table called `CustomerOrderTable`. 
 2. **paybill** - The second API i.e. *paybill* takes the `CustomerOrder` number and fetches credit card token from  `CustomerOrderTable` and calls decrypt method in Lambda Layer to get the deciphered credit card number. 
 
-**Step 6.9** Let's call */order* API to create the order with the following code. Replace the value of `PaymentMethodApiURL` (Step 6.5) and `IdToken` (Step 6.8) with the values identified in the previous steps. 
+**Step 6.10** Let's call */order* API to create the order with the following code. Replace the value of `PaymentMethodApiURL` (Step 6.5) and `IdToken` (Step 6.8) with the values identified in the previous steps. 
 
 ```bash
 curl -X POST \
@@ -377,7 +409,7 @@ The output will look like
 {"message": "Order Created Successfully", "CreditCardToken": "*************"}
 ````
 
-**Step 6.10** Let's call */paybill* API to pay the bill using the previously provided information. Replace the value of `PaymentMethodApiURL` (Step 6.5) and `IdToken` (Step 6.8) with the values identified in the previous steps. 
+**Step 6.11** Let's call */paybill* API to pay the bill using the previously provided information. Replace the value of `PaymentMethodApiURL` (Step 6.5) and `IdToken` (Step 6.8) with the values identified in the previous steps. 
 
 ```bash
 curl -X POST \
@@ -397,7 +429,7 @@ The output will look like
 
 Application has created the customer order with required details and saved the plain text information (generated credit card token) in DynamoDB table called `CustomerOrdeTable` and encrypted `CreditCard` information is stored in another DynamoDB table called `CreditCardTokenizerTable`. Now, check the values in both the tables to see what items are stored. 
 
-**Step 6.11** Get the items stored in `CustomerOrdeTable`
+**Step 6.12** Get the items stored in `CustomerOrdeTable`
 
 ```bash
 aws dynamodb get-item --table-name CustomerOrderTable --key '{ "CustomerOrder" : { "S": "123456789" }  }'
@@ -426,7 +458,7 @@ The output will look like
 
 Note the value of `CreditCardToken`. It will be the generated token value and not actual `CreditCard` provided by the end user.
 
-**Step 6.12** Get the items stored in `CreditCardTokenizerTable`. Replace the value of `CreditCardToken` (Step 6.11) and `AccountId` (Step 6.5) with previously identified values.
+**Step 6.13** Get the items stored in `CreditCardTokenizerTable`. Replace the value of `CreditCardToken` (Step 6.11) and `AccountId` (Step 6.5) with previously identified values.
 
 ```bash
 aws dynamodb get-item --table-name CreditCardTokenizerTable --key '{ "Hash_Key" : { "S": "<CreditCardToken>" }, "Account_Id" : { "S" : "<AccountId>" }  }'
